@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
 import argparse
 import sys
 import tempfile
@@ -144,7 +145,7 @@ def main(_):
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     for i in range(20000):
-      imgs, labels = train_data.get_data(50)
+      imgs, labels = train_data.get_data(100)
       if i % 100 == 0:
         loss, acc, _ = sess.run([cross_entropy, accuracy, train_step], 
           feed_dict={x: imgs, y_: labels, keep_prob: 1.0})
