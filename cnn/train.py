@@ -153,9 +153,9 @@ def main(_):
       train_step.run(feed_dict={x: imgs, y_: labels, keep_prob: 0.5})
     
       if i % 2000 == 0:
-        val_data, val_label = val_data.get_data()
+        val_x, val_label = val_data.get_data()
         val_loss, val_acc, _ = sess.run([cross_entropy, accuracy, train_step], 
-          feed_dict={x: val_data, y_: val_label, keep_prob: 1.0})
+          feed_dict={x: val_x, y_: val_label, keep_prob: 1.0})
         print('val loss: {:.5f}, val accuracy: {:.3f}'.format(val_loss, val_acc))
 
 
