@@ -11,6 +11,8 @@ import data
 
 FLAGS = None
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 
 def deepnn(x):
   """deepnn builds the graph for a deep net for classifying digits.
