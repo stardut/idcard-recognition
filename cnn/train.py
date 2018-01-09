@@ -13,7 +13,9 @@ import data
 FLAGS = None
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
+model_dir = 'model'
+if not os.path.exists(model_dir):
+  os.mkdir(model_dir)
 
 def deepnn(x):
   """deepnn builds the graph for a deep net for classifying digits.
@@ -109,7 +111,6 @@ def bias_variable(shape):
   initial = tf.constant(0.1, shape=shape)
   return tf.Variable(initial)
 
-
 def main(_):
   # Import data
   train_data = data.data('../genarate_data/data/', train=True)
@@ -144,6 +145,7 @@ def main(_):
 
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
+    saver = tf.train.Saver(tf.global_variables(), max_to_keep=5)
     step = 50000
     for i in range(step):
       imgs, labels = train_data.get_data(100)
@@ -158,7 +160,8 @@ def main(_):
         val_loss, val_acc, _ = sess.run([cross_entropy, accuracy, train_step], 
           feed_dict={x: val_x, y_: val_label, keep_prob: 1.0})
         print('val loss: {}, val accuracy: {:.3f}'.format(val_loss, val_acc))
-
+    checkpoint_path = os.path.join(model_dir, clas + '_model.ckpt')
+    saver.save(sess, checkpoint_path, global_step=step)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
