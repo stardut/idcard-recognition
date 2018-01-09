@@ -45,7 +45,7 @@ class data():
         if batch_size != 0:
             epoch = len(self.imgs) // batch_size
             self.imgs = self.imgs[: epoch*batch_size]        
-            if self.pointer == epoch*batch_size - 1:
+            if self.pointer == epoch - 2:
                 self.pointer = 0
 
             x = []
@@ -58,7 +58,7 @@ class data():
                 x.append(data)
                 y.append(lab)
 
-            self.pointer += batch_size
+            self.pointer += 1
             return np.array(x), np.array(y)
 
         else:
