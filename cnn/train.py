@@ -144,15 +144,16 @@ def main(_):
 
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    for i in range(20000):
+    step = 50000
+    for i in range(step):
       imgs, labels = train_data.get_data(100)
       if i % 100 == 0:
         loss, acc, _ = sess.run([cross_entropy, accuracy, train_step], 
           feed_dict={x: imgs, y_: labels, keep_prob: 1.0})
-        print('step: {}, loss: {}, accuracy: {:.3f}'.format(i, loss, acc))
+        print('train step: {}, loss: {}, accuracy: {:.3f}'.format(i, loss, acc))
       train_step.run(feed_dict={x: imgs, y_: labels, keep_prob: 0.5})
     
-      if i % 2000 == 0:
+      if i % 1000 == 0 or i == step - 1:
         val_x, val_label = val_data.get_data()
         val_loss, val_acc, _ = sess.run([cross_entropy, accuracy, train_step], 
           feed_dict={x: val_x, y_: val_label, keep_prob: 1.0})
