@@ -109,8 +109,7 @@ def bias_variable(shape):
 
 def main(_):
   # Import data
-  # mnist = input_data.read_data_sets(FLAGS.data_dir, one_hot=True)
-  train_data = data.data('../genarate_data/data/')
+  train_data = data.data('../genarate_data/data/', train=True)
   val_data = data.data('../genarate_data/samples/')
 
   # Create the model
@@ -145,15 +144,17 @@ def main(_):
     for i in range(20000):
       imgs, labels = train_data.get_data(50)
       if i % 100 == 0:
-        train_accuracy = accuracy.eval(feed_dict={
-            x: imgs, y_: labels, keep_prob: 1.0})
-        print('step %d, training accuracy %g' % (i, train_accuracy))
+        loss, acc, _ = sess.run([cross_entropy, accuracy, train_step], 
+          feed_dict={x: imgs, y_: labels, keep_prob: 1.0})
+        print('step: {}, loss: {:.5f}, accuracy: {:.3f}'.format(i, loss, acc))
       train_step.run(feed_dict={x: imgs, y_: labels, keep_prob: 0.5})
-      
-    val_data, val_label = val_data.get_data()
-    if i % 2000 == 0:
-      print('test accuracy %g' % accuracy.eval(feed_dict={
-          x: val_data, y_: val_label, keep_prob: 1.0}))
+    
+      if i % 2000 == 0:
+        val_data, val_label = val_data.get_data()
+        val_loss, val_acc, _ = sess.run([cross_entropy, accuracy, train_step], 
+          feed_dict={x: val_data, y_: val_label, keep_prob: 1.0})
+        print('val loss: {:.5f}, val accuracy: {:.3f}'.format(val_loss, val_acc))
+
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()

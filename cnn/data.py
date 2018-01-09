@@ -7,29 +7,37 @@ import random
 
 class data():
     """docstring for data"""
-    def __init__(self, data_dir):
-        print('Data loading from ' + data_dir)
+    def __init__(self, data_dir, train=False):
+        
         self.pointer = 0
         img_width = 56
         img_height = 56
-        self.imgs = []
+        self.imgs = []        
+        save_path = 'train_data.npy' if train else 'val_data.npy'
 
-        for folder in os.listdir(data_dir):
-            label = int(folder)
-            img_dir = os.path.join(data_dir, folder)
-            
-            for file in os.listdir(img_dir):
-                img_path = os.path.join(img_dir, file)
-                img = cv2.imread(img_path, 0)
-                img = cv2.resize(img, (img_height, img_width))
-                img = np.reshape(img, (1, img_height*img_width))
+        if os.path.exists(save_path):
+            print('Data loading from ' + save_path)
+            self.imgs = np.load(save_path)
+        else:
+            print('Data loading from ' + data_dir)
+            for folder in os.listdir(data_dir):
+                label = int(folder)
+                img_dir = os.path.join(data_dir, folder)
+                
+                for file in os.listdir(img_dir):
+                    img_path = os.path.join(img_dir, file)
+                    img = cv2.imread(img_path, 0)
+                    img = cv2.resize(img, (img_height, img_width))
+                    img = np.reshape(img, img_height*img_width)
 
-                data = []
-                data.append(img)
-                data.append(label)
-                self.imgs.append(data)
+                    data = []
+                    data.append(img)
+                    data.append(label)
+                    self.imgs.append(data)
 
-        random.shuffle(self.imgs)
+            random.shuffle(self.imgs)
+            np.save(save_path, np.array(self.imgs))
+
         print('Done.')
 
 
@@ -51,7 +59,7 @@ class data():
                 y.append(lab)
 
             self.pointer += batch_size
-            yield np.array(x), np.array(y)
+            return np.array(x), np.array(y)
 
         else:
             batch_size = len(self.imgs)
