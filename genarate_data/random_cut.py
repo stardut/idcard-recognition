@@ -8,7 +8,13 @@ dir_path = 'idcard/'
 files = os.listdir(dir_path)
 num = 2000
 name = 'bg_'
-save_dir = 'data/0/'
+if not os.path.exists('data'):
+    os.mkdir('data')
+
+save_dir = 'data/0/'    
+if not os.path.exists(save_dir):
+    os.mkdir(save_dir)
+
 idx = 0
 for file in files:
     img_path = os.path.join(dir_path, file)

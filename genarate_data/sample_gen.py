@@ -21,12 +21,15 @@ def captcha_generator():
     set_chas = ['0123456789X']
     set_chas.append(get_char())
     nb_chas = [1]
-    nb_image = 30000
+    nb_image = 50000
     font_paths = ['front/fangzheng.ttf', 'front/huawen.ttf']
     rotates = [False]
 
     dir_path = 'data/'
     bg_path = 'background/'
+    if not os.path.exists(dir_path):
+        os.mkdir(dir_path)
+    
 
     for i in range(nb_image):
         choose = random.randint(0, 1)
@@ -40,7 +43,7 @@ def captcha_generator():
 
         height_im = 40
 
-        label = 0
+        label = 1
         # label = 0 if i < nb_image/2 else 1
 
         save_path = os.path.join(dir_path, str(label))
