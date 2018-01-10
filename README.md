@@ -14,12 +14,12 @@
 ### 方案二
 直接使用ctpn + fast-rcnn检测文字区域, 项目地址：[text-detection-ctpn](https://github.com/eragonruan/text-detection-ctpn)
 目前本地跑的结果：
-![result1](img/res1.jpg)
-![result2](img/res2.jpg)
-![result3](img/res3.jpg)
-![result1](img/res4.jpg)
-![result2](img/res5.jpg)
-![result3](img/res6.jpg)
+![result1](img/res1.jpg =300x450)
+![result2](img/res2.jpg =300x450)
+![result3](img/res3.jpg =300x450)
+![result1](img/res4.jpg =300x450)
+![result2](img/res5.jpg =300x450)
+![result3](img/res6.jpg =300x450)
 
 ---
 ## 识别
