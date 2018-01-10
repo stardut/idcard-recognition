@@ -16,9 +16,9 @@
 
 目前本地跑的结果：
 
-<img src="img/res1.jpg" width="450" height="300"><img src="img/res2.jpg" width="450" height="300">
-<img src="img/res3.jpg" width="450" height="300"><img src="img/res4.jpg" width="450" height="300">
-<img src="img/res5.jpg" width="450" height="300"><img src="img/res6.jpg" width="450" height="300">
+<img src="img/res1.jpg" width="400" height="266"><img src="img/res2.jpg" width="400" height="266">
+<img src="img/res3.jpg" width="400" height="266"><img src="img/res4.jpg" width="400" height="266">
+<img src="img/res5.jpg" width="400" height="266"><img src="img/res6.jpg" width="400" height="266">
 
 
 ---
