@@ -14,7 +14,7 @@
 ### 方案二
 直接使用ctpn + fast-rcnn检测文字区域, 项目地址：[text-detection-ctpn](https://github.com/eragonruan/text-detection-ctpn)
 
-目前本地跑的结果：
+目前本地跑的结果（测试图片来自搜索引擎）：
 
 <img src="img/res1.jpg" width="400" height="266"><img src="img/res2.jpg" width="400" height="266">
 <img src="img/res3.jpg" width="400" height="266"><img src="img/res4.jpg" width="400" height="266">
@@ -23,6 +23,10 @@
 
 ---
 ## 识别
+### 方案一
  1. 对有效文字区域进行字符分割
  2. 使用cnn进行分类识别
  3. 使用bounding box对文字位置进行还原
+
+### 方案二
+直接利用rnn对整个句子进行识别（lstm + ctc）
