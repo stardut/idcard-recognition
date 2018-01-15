@@ -4,108 +4,76 @@ import os
 import cv2
 import random
 from PIL import Image, ImageDraw, ImageFont
+from set_dict import word_dict
 
-def get_char():
-    char = set()
-    with open('dict.txt', 'r', encoding='utf8') as f:
-        while 1:
-            text = f.readline()
-            if len(text) < 2:
-                break
-            word = text.split(':')[0]
-            char.add(word)
-    return list(char)
 
-def captcha_generator():
-    
-    set_chas = ['0123456789X']
-    set_chas.append(get_char())
-    nb_chas = [1]
-    nb_image = 50000
+def captcha_generator(nb_image, word):
     font_paths = ['../front/fangzheng.ttf', 'front/huawen.ttf']
     rotates = [False]
 
-    dir_path = 'data/'
+    dir_path = 'train_data/'
     bg_path = '../background/'
     if not os.path.exists(dir_path):
-        os.mkdir(dir_path)
-    
+        os.mkdir(dir_path)    
 
     for i in range(nb_image):
-        choose = random.randint(0, 1)
-        is_cn = False
-        if choose == 1:
-            is_cn = True
-        set_cha = set_chas[choose]
-        font_path = font_paths[choose]
+        font_path = font_paths[0]
         rotate = random.choice(rotates)
-        nb_cha = random.choice(nb_chas)
-
+        nb_cha = random.randint(1, 26)
         height_im = 40
 
-        label = 1
-        # label = 0 if i < nb_image/2 else 1
-
-        save_path = os.path.join(dir_path, str(label))
-        if not os.path.exists(save_path):
-            os.mkdir(save_path)
-
-        # 1 是正样本
-        if label == 1:
-            nb_cha = random.randint(3, 6)
         weight_im = nb_cha * height_im
-
-        if not is_cn:
-            weight_im = int(weight_im * 0.5)
-        else:
-            weight_im = int(weight_im * 0.8)
+        weight_im = int(weight_im * 0.7)
         size_im = (weight_im, height_im)
-        img = captcha_draw(size_im=size_im, nb_cha=nb_cha, set_cha=set_cha, bg_dir = bg_path,
-            rotate=rotate, font=font_path, is_cn=is_cn)
-
-        if label == 1:
-            x1 = int(random.randint(0, 3) * 0.1 * weight_im)
-            x2 = weight_im - x1
-            img = img.crop((x1, 0, x2, height_im))
-        else:
-            x1 = int(random.randint(3, 4) * 0.1 * weight_im)
-            x2 = int(random.randint(6, 8) * 0.1 * weight_im)
-            y1 = int(random.randint(0, 5) * 0.1 * height_im)
-            y2 = int(random.randint(6, 10) * 0.1 * height_im)
-            img = img.crop((x1, y1, x2, y2))
-        img_path = os.path.join(save_path, str(i) + '.jpg')
+        img, label = captcha_draw(word=word, 
+                           size_im=size_im, 
+                           nb_cha=nb_cha, 
+                           bg_dir=bg_path, 
+                           font=font_path)
+        imname = '{:0>6d}_{}.jpg'.format(i, label)
+        img_path = os.path.join(dir_path, imname)
         print(img_path)
         img = img.convert('L')
         img.save(img_path)
 
-def captcha_draw(size_im, nb_cha, set_cha, font=None, bg_dir='',
-    rotate=False, img_num=0, img_now=0, is_cn=False):
-
+def captcha_draw(word, size_im, nb_cha, font=None, bg_dir='', rotate=False):
     width_im, height_im = size_im
-    text_color = 'black'   
+    text_color = 'black'
 
     bg_path = os.path.join(bg_dir, random.choice(os.listdir(bg_dir)))
     bg = Image.open(bg_path)
     im = bg.resize((width_im, height_im))
 
-    rate = random.randint(4, 8) * 0.1
-    derx = int(height_im * (1.0 - rate - 0.05))
-    dery = int(height_im * (1.0 - rate - 0.05))
-    size_cha = int(height_im * rate)
+    rate = random.randint(2, 3) * 0.1
+    derx = int(height_im * 0.1)
+    dery = int(height_im * 0.2)
+    size_cha = int(height_im * 0.6)
 
     drawer = ImageDraw.Draw(bg)
     font = ImageFont.truetype(font, size_cha)
+    tmp = 10
+    set_char = '0123456789X'
+    if nb_cha > 10:        
+        tmp = random.randint(0, 10)
 
+    label = ''
     for i in range(nb_cha):
-        cha = random.choice(set_cha)
+        cha_id = random.randint(0, word.word_num-1)
+        cha = word.id2word(cha_id)
+        # 生成全是数字和X的身份证号码
+        if tmp < 2:
+            cha = random.choice(set_char)
+            cha_id = word.word2id(cha)
+        label += str(cha_id)
+        if i < nb_cha-1:
+            label += '-'    
+        
         im_cha = cha_draw(cha, text_color, font, rotate, size_cha)
-        if is_cn:
-            step = size_cha*i
-        else:
-            step = int(size_cha * 0.7 * i)
+        step = int(size_cha * i)
         im.paste(im_cha, (derx + step, dery), im_cha) # 字符左上角位置
     
-    return im
+    return im, label
+
 
 def cha_draw(cha, text_color, font, rotate,size_cha):
     im = Image.new(mode='RGBA', size=(size_cha*2, size_cha*6))
@@ -119,5 +87,8 @@ def cha_draw(cha, text_color, font, rotate,size_cha):
     im = im.crop(im.getbbox())
     return im
 
+
 if __name__ == '__main__':
-    captcha_generator()
+    num = 50
+    word = word_dict()
+    captcha_generator(num, word)
