@@ -16,6 +16,8 @@ def captcha_generator(nb_image, word):
     if not os.path.exists(dir_path):
         os.mkdir(dir_path)    
 
+    res_ims = []
+    labels = []
     for i in range(nb_image):
         font_path = font_paths[0]
         rotate = random.choice(rotates)
@@ -34,7 +36,10 @@ def captcha_generator(nb_image, word):
         img_path = os.path.join(dir_path, imname)
         print(img_path)
         img = img.convert('L')
-        img.save(img_path)
+        #img.save(img_path)
+        res_ims.append(img)
+        labels.append(label)
+    return res_ims, label
 
 def captcha_draw(word, size_im, nb_cha, font=None, bg_dir='', rotate=False):
     width_im, height_im = size_im
