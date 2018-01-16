@@ -30,3 +30,10 @@
 
 ### 方案二 （模型训练周期较长）
 直接利用rnn对整个句子进行识别（lstm + ctc）
+
+#### 数据集制作
+随机自动生成：
+<img src="img/rec_data1.jpg" >
+<img src="img/rec_data2.jpg" >
+<img src="img/rec_data3.jpg" >
+<img src="img/rec_data4.jpg" >
