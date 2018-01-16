@@ -33,6 +33,7 @@
 
 #### 数据集制作
 随机自动生成：
+
 <img src="img/rec_data1.jpg" >
 <img src="img/rec_data2.jpg" >
 <img src="img/rec_data3.jpg" >
