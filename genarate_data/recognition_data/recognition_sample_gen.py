@@ -6,13 +6,15 @@ import random
 from PIL import Image, ImageDraw, ImageFont
 from set_dict import word_dict
 
+this_path = os.path.split(os.path.realpath(__file__))[0]
 
 def captcha_generator(nb_image, word):
-    font_paths = ['../front/fangzheng.ttf', 'front/huawen.ttf']
+    font_paths = [os.path.join(this_path, '../front/fangzheng.ttf'),
+                  os.path.join(this_path, 'front/huawen.ttf')]
     rotates = [False]
 
-    dir_path = 'train_data/'
-    bg_path = '../background/'
+    dir_path = os.path.join(this_path, 'train_data/')
+    bg_path = os.path.join(this_path, '../background/')
     if not os.path.exists(dir_path):
         os.mkdir(dir_path)    
 
@@ -32,14 +34,10 @@ def captcha_generator(nb_image, word):
                            nb_cha=nb_cha, 
                            bg_dir=bg_path, 
                            font=font_path)
-        imname = '{:0>6d}_{}.jpg'.format(i, label)
-        img_path = os.path.join(dir_path, imname)
-        print(img_path)
         img = img.convert('L')
-        #img.save(img_path)
         res_ims.append(img)
         labels.append(label)
-    return res_ims, label
+    return res_ims, labels
 
 def captcha_draw(word, size_im, nb_cha, font=None, bg_dir='', rotate=False):
     width_im, height_im = size_im
@@ -61,7 +59,7 @@ def captcha_draw(word, size_im, nb_cha, font=None, bg_dir='', rotate=False):
     if nb_cha > 10:        
         tmp = random.randint(0, 10)
 
-    label = ''
+    label = []
     for i in range(nb_cha):
         cha_id = random.randint(0, word.word_num-1)
         cha = word.id2word(cha_id)
@@ -69,9 +67,7 @@ def captcha_draw(word, size_im, nb_cha, font=None, bg_dir='', rotate=False):
         if tmp < 2:
             cha = random.choice(set_char)
             cha_id = word.word2id(cha)
-        label += str(cha_id)
-        if i < nb_cha-1:
-            label += '-'    
+        label.append(int(cha_id))
         
         im_cha = cha_draw(cha, text_color, font, rotate, size_cha)
         step = int(size_cha * i)
@@ -91,9 +87,3 @@ def cha_draw(cha, text_color, font, rotate,size_cha):
         im = im.rotate(angle, Image.BILINEAR, expand=1)
     im = im.crop(im.getbbox())
     return im
-
-
-if __name__ == '__main__':
-    num = 50
-    word = word_dict()
-    captcha_generator(num, word)

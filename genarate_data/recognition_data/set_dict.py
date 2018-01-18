@@ -1,14 +1,17 @@
 # -*- coding: utf8 -*-
 
 import os
+import sys
 from six.moves import cPickle
 
+this_path = os.path.split(os.path.realpath(__file__))[0]
 
 class word_dict(object):
     """set Chinese-id dict"""
     def __init__(self):
         super(word_dict, self).__init__()
-        self.vocab_file = 'vocab.pkl'
+        global this_path
+        self.vocab_file = os.path.join(this_path, 'vocab.pkl')
         self.init()
 
     def init(self):
@@ -24,7 +27,8 @@ class word_dict(object):
         self.id_word = dict(enumerate(self.words))
 
     def set_vocab(self):
-        with open('word1.txt', 'r', encoding='utf8') as f:
+        global this_path
+        with open(os.path.join(this_path, 'word1.txt'), 'r', encoding='utf8') as f:
             word = set(f.read())
             self.words = list(word)
             with open(self.vocab_file, 'wb') as f1:

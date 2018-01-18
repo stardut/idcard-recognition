@@ -7,21 +7,22 @@ import numpy as np
 
 class LSTM_CTC(object):
     """docstring for LSTM"""
-    def __init__(self, num_layer, num_units, keep_prob, 
-            num_class, labels, input_size, batch_size):
+    def __init__(self, num_layer, num_units, num_class,
+                input_size, batch_size, time_step, learn_rate):
         self.num_layer = num_layer
         self.num_units = num_units
         self.num_class = num_class
-        self.keep_prob = keep_prob
-        self.labels    = labels
+        self.time_step = time_step
         self.input_size = input_size
         self.batch_size = batch_size
+        self.learn_rate = learn_rate
 
     def build(self):
         self.global_step = tf.Variable(0, trainable=False)
-        self.X = tf.placeholder(dtype=tf.float32, [None, None, self.input_size])
-        self.labels = tf.sparse_placeholder(tf.int32)
-        self.seq_len = tf.placeholder(tf.int32, [None])
+        self.X = tf.placeholder(dtype=tf.float32, shape=[None, self.time_step, self.input_size], name='input')
+        self.labels = tf.sparse_placeholder(tf.int32, name='label')
+        self.seq_len = tf.placeholder(tf.int32, [None], name='seq_len')
+        self.keep_prob = tf.placeholder(tf.float32)
 
         mlstm_cell = tf.nn.rnn_cell.MultiRNNCell([self.unit() for i in range(self.num_layer)])
         self.init_state = mlstm_cell.zero_state(self.batch_size, dtype=tf.float32)
@@ -42,10 +43,10 @@ class LSTM_CTC(object):
 
         self.loss = tf.reduce_mean(
             tf.nn.ctc_loss(labels=self.labels, inputs=logits, sequence_length=self.seq_len))
-        self.train_op = tf.train.AdamOptimizer(self.lr).minimize(self.loss, self.global_step)
+        self.train_op = tf.train.AdamOptimizer(self.learn_rate).minimize(self.loss, self.global_step)
 
-        self.decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, seq_len, merge_repeated=False)    
-        self.acc = tf.reduce_mean(tf.edit_distance(tf.cast(decoded[0], tf.int32), self.labels))
+        self.decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, self.seq_len, merge_repeated=False)    
+        self.acc = tf.reduce_mean(tf.edit_distance(tf.cast(self.decoded[0], tf.int32), self.labels))
 
 
     def unit(self):
