@@ -2,12 +2,17 @@
 
 import time
 import sys
-
+import os
 import numpy as np
 import tensorflow as tf
 
 from data import Data
 from lstm import LSTM_CTC
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+model_path = 'model'
+if not os.path.exists(model_path):
+    os.mkdir(model_path)
 
 img_shape = (32, 256)
 data = Data(img_shape)
@@ -21,7 +26,7 @@ time_step = img_shape[1]
 
 learn_rate = 0.001
 batch_size = 64
-step = 1000
+step = 10000 * 100
 
 
 model = LSTM_CTC(num_layer=num_layer,
@@ -53,3 +58,7 @@ with tf.Session() as sess:
         ori = data.decode_sparse_tensor(labels)
         acc = data.hit(pre, ori)
         print('step: {}, accuracy: {:.4f}, loss: {:.6f}'.format(i, acc, loss))
+
+        if step % 10000 == 0:
+            checkpoint_path = os.path.join(model_dir, 'model.ckpt')
+            saver.save(sess, checkpoint_path, global_step=step)
