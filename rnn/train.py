@@ -66,3 +66,4 @@ with tf.Session() as sess:
         if step % 10000 == 0:
             checkpoint_path = os.path.join(model_path, 'model.ckpt')
             saver.save(sess, checkpoint_path, global_step=step)
+            print('save model in step: {}'.format(step))
