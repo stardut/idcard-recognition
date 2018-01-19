@@ -23,7 +23,7 @@ def captcha_generator(nb_image, word):
     for i in range(nb_image):
         font_path = font_paths[0]
         rotate = random.choice(rotates)
-        nb_cha = random.randint(1, 26)
+        nb_cha = random.randint(2, 26)
         height_im = 40
 
         weight_im = nb_cha * height_im

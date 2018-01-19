@@ -19,10 +19,10 @@ class LSTM_CTC(object):
 
     def build(self):
         self.global_step = tf.Variable(0, trainable=False)
-        self.X = tf.placeholder(dtype=tf.float32, shape=[None, self.time_step, self.input_size], name='input')
+        self.X = tf.placeholder(dtype=tf.float32, shape=[None, None, self.input_size], name='input')
         self.labels = tf.sparse_placeholder(tf.int32, name='label')
-        self.seq_len = tf.placeholder(tf.int32, [None], name='seq_len')
-        self.keep_prob = tf.placeholder(tf.float32)
+        self.seq_len = tf.placeholder(tf.int32, [None], name='sequence_len')    
+        self.keep_prob = tf.placeholder(tf.float32, name='keep_prob')
 
         mlstm_cell = tf.nn.rnn_cell.MultiRNNCell([self.unit() for i in range(self.num_layer)])
         self.init_state = mlstm_cell.zero_state(self.batch_size, dtype=tf.float32)
@@ -32,12 +32,12 @@ class LSTM_CTC(object):
                                            initial_state=self.init_state,
                                            time_major=False)
 
-        h_out = outputs[:, -1, :]
+        outputs = tf.reshape(outputs, [-1, self.num_units])
         W = tf.Variable(tf.truncated_normal([self.num_units, self.num_class], stddev=0.1), 
             dtype=tf.float32)
         b = tf.Variable(tf.constant(0.1, shape=[self.num_class], dtype=tf.float32))
-        
-        logits = tf.nn.softmax(tf.matmul(h_out, W) + b)
+
+        logits = tf.matmul(outputs, W) + b
         logits = tf.reshape(logits, [self.batch_size, -1, self.num_class])
         logits = tf.transpose(logits, (1, 0, 2))
 

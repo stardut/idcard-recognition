@@ -13,14 +13,14 @@ img_shape = (32, 256)
 data = Data(img_shape)
 
 num_layer = 2
-num_units = 128
+num_units = 256
 num_class = data.word_dict.word_num + 1 # 1: ctc_blank
 keep_prob = 0.5
 input_size = img_shape[0]
 time_step = img_shape[1]
 
 learn_rate = 0.001
-batch_size = 3
+batch_size = 64
 step = 1000
 
 
@@ -40,14 +40,16 @@ with tf.Session() as sess:
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=10)
     for i in range(step):
         inputs, labels = data.get_batch(batch_size)
-        print(inputs[0].shape)
         seq_len = np.ones(batch_size) * img_shape[1]
-        print(seq_len)
+
         feed = {
             model.X : inputs,
             model.labels : labels,
             model.seq_len : seq_len,
             model.keep_prob: keep_prob
         }
-        acc, loss, _ = sess.run([model.acc, model.loss, model.train_op], feed_dict=feed)
-        print('step: {}, accuracy: {:.4f}, loss: {.6f}'.format(i, acc, loss))
+        decoded, loss, _ = sess.run([model.decoded, model.loss, model.train_op], feed_dict=feed)
+        pre = data.decode_sparse_tensor(decoded[0])
+        ori = data.decode_sparse_tensor(labels)
+        acc = data.hit(pre, ori)
+        print('step: {}, accuracy: {:.4f}, loss: {:.6f}'.format(i, acc, loss))

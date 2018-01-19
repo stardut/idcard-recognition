@@ -21,14 +21,8 @@ class Data(object):
         for im in imgs:
             im = np.resize(im, self.img_shape)
             im = np.transpose(im)
-            ims.append(im)
-        
-        # labels = [np.asarray(label) for label in labels]
-        print(labels)
+            ims.append(im)        
         labels = self.sparse_tuple_from(labels)
-        # labels = self.SimpleSparseTensorFrom(labels)
-        print(labels)
-
         return np.asarray(ims), labels
 
 
@@ -49,8 +43,7 @@ class Data(object):
      
         indices = np.asarray(indices, dtype=np.int64)
         values = np.asarray(values, dtype=dtype)
-        shape = np.asarray([len(sequences), np.asarray(indices).max(0)[1] + 1], dtype=np.int64)
-     
+        shape = np.asarray([len(sequences), np.asarray(indices).max(0)[1] + 1], dtype=np.int64)     
         return indices, values, shape
 
 
@@ -74,28 +67,17 @@ class Data(object):
         result = []
         for index in decoded_indexes:
             ids = [sparse_tensor[1][m] for m in index]
-            text = ''.join(list(map(word_dict.id2word, ids)))                
+            text = ''.join(list(map(self.word_dict.id2word, ids)))
             result.append(text)
-
         return result
 
 
-    def SimpleSparseTensorFrom(self, x):
-        """Create a very simple SparseTensor with dimensions (batch, time).
-        Args:
-        x: a list of lists of type int
-        Returns:
-        x_ix and x_val, the indices and values of the SparseTensor<2>.
-        """
-        x_ix = []
-        x_val = []
-        for batch_i, batch in enumerate(x):
-            for time, val in enumerate(batch):
-                x_ix.append([batch_i, time])
-                x_val.append(val)
-        x_shape = [len(x), np.asarray(x_ix).max(0)[1]+1]
-        x_ix = tf.constant(x_ix, tf.int64)
-        x_val = tf.constant(x_val, tf.int32)
-        x_shape = tf.constant(x_shape, tf.int64)
+    def hit(self, text1, text2):
+        res = []
+        for idx, words in enumerate(text1):
+            res.append(words == text2[idx])
+        accurary = np.mean(np.asarray(res))
+        return accurary
 
-        return tf.SparseTensor(x_ix, x_val, x_shape)
+
+        
