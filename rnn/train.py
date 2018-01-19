@@ -60,7 +60,7 @@ with tf.Session() as sess:
             pre = data.decode_sparse_tensor(decoded[0])
             ori = data.decode_sparse_tensor(labels)
             acc = data.hit(pre, ori)
-            t = (time.time() - start()) / 100.0
+            t = (time.time() - start) / 100
             print('step: {}, accuracy: {:.4f}, loss: {:.6f}, time cost per step: {}'.format(i, acc, loss, t))
 
         if step % 10000 == 0:
