@@ -61,7 +61,7 @@ with tf.Session() as sess:
             ori = data.decode_sparse_tensor(labels)
             acc = data.hit(pre, ori)
             t = (time.time() - start) / 100
-            print('step: {}, accuracy: {:.4f}, loss: {:.6f}, time cost per step: {}'.format(i, acc, loss, t))
+            print('step: {}, accuracy: {:.4f}, loss: {:.6f}, time cost per step: {:.3f}'.format(i, acc, loss, t))
 
         if step % 10000 == 0:
             checkpoint_path = os.path.join(model_path, 'model.ckpt')
