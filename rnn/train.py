@@ -60,5 +60,5 @@ with tf.Session() as sess:
         print('step: {}, accuracy: {:.4f}, loss: {:.6f}'.format(i, acc, loss))
 
         if step % 10000 == 0:
-            checkpoint_path = os.path.join(model_dir, 'model.ckpt')
+            checkpoint_path = os.path.join(model_path, 'model.ckpt')
             saver.save(sess, checkpoint_path, global_step=step)
