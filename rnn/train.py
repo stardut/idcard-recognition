@@ -25,7 +25,7 @@ input_size = img_shape[0]
 time_step = img_shape[1]
 
 learn_rate = 0.001
-batch_size = 128
+batch_size = 32
 step = 10000 * 100
 
 
@@ -56,12 +56,14 @@ with tf.Session() as sess:
         }
         decoded, loss, _ = sess.run([model.decoded, model.loss, model.train_op], feed_dict=feed)
 
-        if i % 100 == 0:
-            pre = data.decode_sparse_tensor(decoded[0])
-            ori = data.decode_sparse_tensor(labels)
-            acc = data.hit(pre, ori)
-            t = (time.time() - start) / 100
-            print('step: {}, accuracy: {:.4f}, loss: {:.6f}, time cost per step: {:.3f}'.format(i, acc, loss, t))
+        # if i % 100 == 0:
+        pre = data.decode_sparse_tensor(decoded[0])
+        ori = data.decode_sparse_tensor(labels)
+        acc = data.hit(pre, ori)
+        t = (time.time() - start) / (i+1)
+        print('step: {}, accuracy: {:.4f}, loss: {:.6f}, time cost per step: {:.3f}'.format(i, acc, loss, t))
+        print('origin: ' + ori[0])
+        print('predict: ' + pre[0])
 
         if i % 10000 == 0:
             checkpoint_path = os.path.join(model_path, 'model.ckpt')
