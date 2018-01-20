@@ -42,7 +42,7 @@ init = tf.global_variables_initializer()
 
 with tf.Session() as sess:
     sess.run(init)
-    saver = tf.train.Saver(tf.global_variables(), max_to_keep=10)
+    saver = tf.train.Saver(tf.global_variables(), max_to_keep=5)
     start = time.time()
     for i in range(step):
         inputs, labels = data.get_batch(batch_size)
@@ -56,14 +56,14 @@ with tf.Session() as sess:
         }
         decoded, loss, _ = sess.run([model.decoded, model.loss, model.train_op], feed_dict=feed)
 
-        if step % 100 == 0:
+        if i % 100 == 0:
             pre = data.decode_sparse_tensor(decoded[0])
             ori = data.decode_sparse_tensor(labels)
             acc = data.hit(pre, ori)
             t = (time.time() - start) / 100
             print('step: {}, accuracy: {:.4f}, loss: {:.6f}, time cost per step: {:.3f}'.format(i, acc, loss, t))
 
-        if step % 10000 == 0:
+        if i % 10000 == 0:
             checkpoint_path = os.path.join(model_path, 'model.ckpt')
-            saver.save(sess, checkpoint_path, global_step=step)
-            print('save model in step: {}'.format(step))
+            saver.save(sess, checkpoint_path, global_step=i)
+            print('save model in step: {}'.format(i))
