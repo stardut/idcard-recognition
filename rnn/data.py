@@ -20,6 +20,7 @@ class Data(object):
         imgs, labels = img_gen.captcha_generator(batch_size, self.word_dict)
         ims = []
         for im in imgs:
+            im = np.asarray(im)
             im = cv2.resize(im, (self.img_shape[1], self.img_shape[0]))
             im = np.transpose(im)
             ims.append(im)
