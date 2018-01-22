@@ -40,7 +40,8 @@ model = LSTM_CTC(num_layer=num_layer,
 model.build()
 init = tf.global_variables_initializer()
 
-with tf.Session() as sess:
+
+with tf.Session(config=tf.ConfigProto(device_count={'gpu': 1})) as sess:
     sess.run(init)
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=5)
     start = time.time()
@@ -62,7 +63,7 @@ with tf.Session() as sess:
         acc = data.hit(pre, ori)
         t = (time.time() - start) / (i+1)
         print('step: {}, accuracy: {:.4f}, loss: {:.6f}, time cost per step: {:.3f}'.format(i, acc, loss, t))
-        print('origin: ' + ori[0])
+        print('origin : ' + ori[0])
         print('predict: ' + pre[0])
 
         if i % 10000 == 0:
