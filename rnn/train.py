@@ -40,13 +40,14 @@ model = LSTM_CTC(num_layer=num_layer,
 model.build()
 init = tf.global_variables_initializer()
 
-
-with tf.Session(config=tf.ConfigProto(device_count={'gpu': 1})) as sess:
+with tf.Session() as sess:
     sess.run(init)
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=5)
     start = time.time()
     for i in range(step):
+        st1 = time.time()
         inputs, labels = data.get_batch(batch_size)
+        st2 = time.time()
         seq_len = np.ones(batch_size) * img_shape[1]
 
         feed = {
@@ -57,14 +58,17 @@ with tf.Session(config=tf.ConfigProto(device_count={'gpu': 1})) as sess:
         }
         decoded, loss, _ = sess.run([model.decoded, model.loss, model.train_op], feed_dict=feed)
 
+        st3 = time.time()
         # if i % 100 == 0:
         pre = data.decode_sparse_tensor(decoded[0])
         ori = data.decode_sparse_tensor(labels)
         acc = data.hit(pre, ori)
         t = (time.time() - start) / (i+1)
+        st4 = time.time()
         print('step: {}, accuracy: {:.4f}, loss: {:.6f}, time cost per step: {:.3f}'.format(i, acc, loss, t))
         print('origin : ' + ori[0])
         print('predict: ' + pre[0])
+        print('gen data: {:.3f}, run: {:.3f}, decode: {:.3f}'.format(st2-st1, st3-st2, st4-st3))
 
         if i % 10000 == 0:
             checkpoint_path = os.path.join(model_path, 'model.ckpt')
