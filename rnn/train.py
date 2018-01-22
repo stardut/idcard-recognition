@@ -18,13 +18,13 @@ img_shape = (32, 256)
 data = Data(img_shape)
 
 num_layer = 2
-num_units = 256
+num_units = 512
 num_class = data.word_dict.word_num + 1 # 1: ctc_blank
 keep_prob = 0.5
 input_size = img_shape[0]
 time_step = img_shape[1]
 
-learn_rate = 0.001
+learn_rate = 0.01
 batch_size = 32
 step = 10000 * 100
 
@@ -40,7 +40,7 @@ model = LSTM_CTC(num_layer=num_layer,
 model.build()
 init = tf.global_variables_initializer()
 
-with tf.Session() as sess:
+with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     sess.run(init)
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=5)
     start = time.time()
