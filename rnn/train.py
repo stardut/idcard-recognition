@@ -32,8 +32,7 @@ model = LSTM_CTC(num_layer=num_layer,
                  num_units=num_units,
                  num_class=num_class,
                  input_size=input_size,
-                 batch_size=batch_size,
-                 time_step=time_step)
+                 batch_size=batch_size)
 
 model.build()
 init = tf.global_variables_initializer()
