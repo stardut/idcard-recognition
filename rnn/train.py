@@ -14,7 +14,7 @@ model_path = 'model'
 if not os.path.exists(model_path):
     os.mkdir(model_path)
 
-img_shape = (32, 256)
+img_shape = (28, 256)
 data = Data(img_shape)
 
 num_layer = 2
@@ -46,9 +46,9 @@ with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
     start = time.time()
     for i in range(step):
         st1 = time.time()
-        inputs, labels = data.get_batch(batch_size)
+        inputs, labels, seq_len = data.get_batch(batch_size)
         st2 = time.time()
-        seq_len = np.ones(batch_size) * img_shape[1]
+        # seq_len = np.ones(batch_size) * img_shape[1]
 
         feed = {
             model.X : inputs,

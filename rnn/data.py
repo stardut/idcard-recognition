@@ -17,15 +17,26 @@ class Data(object):
         self.img_shape = img_shape
 
     def get_batch(self, batch_size=50):
+        """
+        Create a batch of batch_size
+        Args:
+            batch_size: a int number of batch size
+        Return:
+            images, lables, seq length
+        """
         imgs, labels = img_gen.captcha_generator(batch_size, self.word_dict)
         ims = []
+        seq_len = []
         for im in imgs:
             im = np.asarray(im)
-            im = cv2.resize(im, (self.img_shape[1], self.img_shape[0]))
+            raws, cols = im.shape
+            col = int(self.img_shape[0]*cols / raws)
+            seq_len.append(col)
+            im = cv2.resize(im, (col, self.img_shape[0]))
             im = np.transpose(im)
             ims.append(im)
         labels = self.sparse_tuple_from(labels)
-        return np.asarray(ims), labels
+        return np.asarray(ims), labels, np.asarray(seq_len)
 
 
     #转化一个序列列表为稀疏矩阵    

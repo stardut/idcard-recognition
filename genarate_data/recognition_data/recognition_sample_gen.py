@@ -3,6 +3,7 @@
 import os
 import cv2
 import random
+import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from set_dict import word_dict
 
@@ -23,7 +24,7 @@ def captcha_generator(nb_image, word):
     for i in range(nb_image):
         font_path = font_paths[0]
         rotate = random.choice(rotates)
-        nb_cha = random.randint(2, 26)
+        nb_cha = random.randint(5, 26)
         height_im = 40
 
         weight_im = nb_cha * height_im
@@ -35,6 +36,7 @@ def captcha_generator(nb_image, word):
                            bg_dir=bg_path, 
                            font=font_path)
         img = img.convert('L')
+        img = cut_block(img)
         res_ims.append(img)
         labels.append(label)
     return res_ims, labels
@@ -56,8 +58,11 @@ def captcha_draw(word, size_im, nb_cha, font=None, bg_dir='', rotate=False):
     font = ImageFont.truetype(font, size_cha)
     tmp = 10
     set_char = '0123456789X'
+    is_cn = True
     if nb_cha > 10:        
         tmp = random.randint(0, 10)
+    if tmp < 2:
+        is_cn = False
 
     label = []
     for i in range(nb_cha):
@@ -71,9 +76,23 @@ def captcha_draw(word, size_im, nb_cha, font=None, bg_dir='', rotate=False):
         
         im_cha = cha_draw(cha, text_color, font, rotate, size_cha)
         step = int(size_cha * i)
-        im.paste(im_cha, (derx + step, dery), im_cha) # 字符左上角位置
+        if not is_cn:
+            step *= 0.7
+        im.paste(im_cha, (derx + int(step), dery), im_cha) # 字符左上角位置
     
     return im, label
+
+def cut_block(img):
+    img = np.asarray(img)
+    raws, cols = img.shape
+    pixels = np.mean(img, 0)
+    i = cols - 1
+    while i > 0:
+        if pixels[i] < 220:
+            x1 = min(i + 10, cols-1)
+            return img[:, :x1]
+        i -= 1
+    return img
 
 
 def cha_draw(cha, text_color, font, rotate,size_cha):
