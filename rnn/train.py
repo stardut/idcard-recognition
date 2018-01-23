@@ -49,7 +49,8 @@ with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
             model.X : inputs,
             model.labels : labels,
             model.seq_len : seq_len,
-            model.keep_prob: keep_prob
+            model.keep_prob: keep_prob,
+            model.learn_rate: learn_rate
         }
         decoded, loss, _ = sess.run([model.decoded, model.loss, model.train_op], feed_dict=feed)
 

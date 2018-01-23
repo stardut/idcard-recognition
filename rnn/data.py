@@ -30,9 +30,10 @@ class Data(object):
         for im in imgs:
             im = np.asarray(im)
             raws, cols = im.shape
-            col = int(self.img_shape[0]*cols / raws)
-            seq_len.append(col)
-            im = cv2.resize(im, (col, self.img_shape[0]))
+            # col = int(self.img_shape[0]*cols / raws)
+            # seq_len.append(col)
+            # im = cv2.resize(im, (col, self.img_shape[0]))
+            im = cv2.resize(im, (self.img_shape[1], self.img_shape[0]))
             im = np.transpose(im)
             ims.append(im)
         labels = self.sparse_tuple_from(labels)

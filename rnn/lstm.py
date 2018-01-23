@@ -38,13 +38,13 @@ class LSTM_CTC(object):
 
         logits = tf.matmul(outputs, W) + b
         logits = tf.reshape(logits, [self.batch_size, -1, self.num_class])
-        logits = tf.transpose(logits, (1, 0, 2))
+        self.logits = tf.transpose(logits, (1, 0, 2))
 
         self.loss = tf.reduce_mean(
-            tf.nn.ctc_loss(labels=self.labels, inputs=logits, sequence_length=self.seq_len))
+            tf.nn.ctc_loss(labels=self.labels, inputs=self.logits, sequence_length=self.seq_len))
         self.train_op = tf.train.AdamOptimizer(self.learn_rate).minimize(self.loss, self.global_step)
 
-        self.decoded, log_prob = tf.nn.ctc_greedy_decoder(logits, seq_len,merge_repeated=False)
+        self.decoded, log_prob = tf.nn.ctc_greedy_decoder(self.logits, self.seq_len, merge_repeated=False)
         # self.decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, self.seq_len, merge_repeated=False)    
         self.acc = tf.reduce_mean(tf.edit_distance(tf.cast(self.decoded[0], tf.int32), self.labels))
 
