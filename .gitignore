@@ -1,0 +1,10 @@
+*.asv
+*.html
+automatically-detect-and-recognize-text-in-natural-images_files/
+*.m
+!MSER.m
+!mergeboxes.m
+!nms.m
+*.docx
+__pycache__/
+genarate_data/background/
