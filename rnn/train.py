@@ -60,12 +60,12 @@ with tf.Session(config=tf.ConfigProto(log_device_placement=True)) as sess:
             acc = data.hit(pre, ori)
             t = (time.time() - start) / (i+1)
             print('step: {}, accuracy: {:.4f}, loss: {:.6f}, speed: {:.3f}s / step, lr: {}' \
-                .format(i, acc, loss, t, learn_rate))
+                .format(i+1, acc, loss, t, learn_rate))
             print('origin : ' + ori[0])
             print('predict: ' + pre[0])
-            learn_rate = learn_rate * 0.92 ** (i / 1000)
+            learn_rate = learn_rate * 0.92 ** ((i+1) / 1000)
 
         if (i+1) % 3000 == 0:
             checkpoint_path = os.path.join(model_path, 'model.ckpt')
-            saver.save(sess, checkpoint_path, global_step=i)
-            print('save model in step: {}'.format(i))
+            saver.save(sess, checkpoint_path, global_step=i+1)
+            print('save model in step: {}'.format(i+1))
