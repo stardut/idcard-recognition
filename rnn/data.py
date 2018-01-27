@@ -1,5 +1,4 @@
 # -*- coding:utf8 -*-
-
 import os
 import sys
 import cv2
@@ -10,15 +9,16 @@ sys.path.append('../genarate_data/recognition_data/')
 from set_dict import word_dict
 import recognition_sample_gen as img_gen
 
+
 class Data(object):
-    """docstring for data"""
+    """Data class for create training data and decode/encode data."""
     def __init__(self, img_shape):
         self.word_dict = word_dict()
         self.img_shape = img_shape
 
     def get_batch(self, batch_size=50):
-        """
-        Create a batch of batch_size
+        """Create a training batch of batch_size.
+
         Args:
             batch_size: a int number of batch size
         Return:
@@ -38,12 +38,10 @@ class Data(object):
             ims.append(im)
         labels = self.sparse_tuple_from(labels)
         return np.asarray(ims), labels, np.asarray(seq_len)
-
-
-    #转化一个序列列表为稀疏矩阵    
+ 
     def sparse_tuple_from(self, sequences, dtype=np.int32):
-        """
-        Create a sparse representention of x.
+        """Create a sparse representention of x.
+
         Args:
             sequences: a list of lists of type dtype where each element is a sequence
         Returns:
@@ -60,12 +58,8 @@ class Data(object):
         shape = np.asarray([len(sequences), np.asarray(indices).max(0)[1] + 1], dtype=np.int64)     
         return indices, values, shape
 
-
-    #转化稀疏矩阵到序列
     def decode_sparse_tensor(self, sparse_tensor):
-        """
-        transform sparse to sequences ids
-        """
+        """Transform sparse to sequences ids."""
         decoded_indexes = list()
         current_i = 0
         current_seq = []
@@ -85,13 +79,9 @@ class Data(object):
             result.append(text)
         return result
 
-
     def hit(self, text1, text2):
+        """Calculate accuracy of predictive text and target text."""
         res = []
-        for idx, words in enumerate(text1):
-            res.append(words == text2[idx])
-        accurary = np.mean(np.asarray(res))
-        return accurary
-
-
-        
+        for idx, words1 in enumerate(text1):
+            res.append(words1 == text2[idx])
+        return np.mean(np.asarray(res))
