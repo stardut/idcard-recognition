@@ -18,12 +18,12 @@ img_shape = (32, 80)
 data = Data(img_shape)
 
 num_layer = 2
-num_units = 256
-num_class = data.word_dict.word_num + 1 # 1: ctc_blank
+num_units = 512
+num_class = data.word_dict.word_num + 1 + 1 # 1: ctc_blank
 keep_prob = 0.5
 input_size = img_shape[0]
 learn_rate = 0.01
-batch_size = 2
+batch_size = 64
 step = 10000 * 100
 
 model = LSTM_CTC(num_layer=num_layer,
@@ -42,7 +42,7 @@ with tf.Session() as sess:
     start = time.time()
     for i in range(step):
         inputs, labels, seq_len = data.get_batch(batch_size)
-        seq_len = np.ones(batch_size) * img_shape[1]
+        seq_len = np.ones(batch_size) * 128
         feed = {
             model.X : inputs,
             model.labels : labels,
@@ -65,7 +65,7 @@ with tf.Session() as sess:
         loss, logits, _ = sess.run([model.loss, model.logits, model.train_op], feed_dict=feed)
 
         if (i+1) % 3000 == 0:
-            learn_rate = max(0.99 ** (i / 5000) * learn_rate, 0.00001)
+            learn_rate = max(0.99 ** (i / 10000) * learn_rate, 0.0001)
             checkpoint_path = os.path.join(model_path, 'model.ckpt')
             saver.save(sess, checkpoint_path, global_step=i+1)
             print('save model in step: {}'.format(i+1))
