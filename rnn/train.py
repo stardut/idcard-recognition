@@ -18,11 +18,11 @@ img_shape = (32, 80)
 data = Data(img_shape)
 
 num_layer = 2
-num_units = 512
+num_units = 256
 num_class = data.word_dict.word_num + 1 + 1 # 1: ctc_blank
 keep_prob = 0.5
 input_size = img_shape[0]
-learn_rate = 0.01
+learn_rate = 0.005
 batch_size = 64
 step = 10000 * 100
 
@@ -52,20 +52,20 @@ with tf.Session() as sess:
         }
 
         if (i+1) % 100 == 0:
-            decode, word_error = sess.run([decoded, err], feed_dict=feed)
+            decode, word_error, cost = sess.run([decoded, err, model.cost], feed_dict=feed)
             pre = data.decode_sparse_tensor(decode[0])
             ori = data.decode_sparse_tensor(labels)
             acc = data.hit(pre, ori)
             speed = i * batch_size / (time.time() - start)
             print(('step: %d, accuracy: %.4f, word error: %.4f loss: %.6f, speed: %.2f imgs/s, lr: %.6f') % \
-                (i+1, acc, word_error, loss, speed, learn_rate))
+                (i+1, acc, word_error, cost, speed, learn_rate))
             print('origin : ' + ori[0])
             print('predict: ' + pre[0])
 
-        loss, logits, _ = sess.run([model.loss, model.logits, model.train_op], feed_dict=feed)
+        sess.run([model.loss, model.train_op], feed_dict=feed)
 
         if (i+1) % 3000 == 0:
-            learn_rate = max(0.99 ** (i / 10000) * learn_rate, 0.0001)
+            learn_rate = max(0.99 ** (i / 6000) * learn_rate, 0.0001)
             checkpoint_path = os.path.join(model_path, 'model.ckpt')
             saver.save(sess, checkpoint_path, global_step=i+1)
             print('save model in step: {}'.format(i+1))

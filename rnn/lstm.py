@@ -51,8 +51,8 @@ class LSTM_CTC(object):
         b_fc1 = self.bias_variable([1024])
 
         feature = tf.nn.relu(tf.matmul(cnn_out, w_fc1) + b_fc1)
+        feature = tf.nn.dropout(feature, self.keep_prob)
         feature = tf.reshape(feature, [self.batch_size, 128, 8])
-
 
         mlstm_cell = tf.nn.rnn_cell.MultiRNNCell([self.unit() for i in range(self.num_layer)])
         self.init_state = mlstm_cell.zero_state(self.batch_size, dtype=tf.float32)
@@ -61,22 +61,17 @@ class LSTM_CTC(object):
                                            sequence_length=self.seq_len,
                                            initial_state=self.init_state,
                                            time_major=False)
-        outputs = tf.reshape(outputs, [-1, self.num_units])
+        h_state = tf.reshape(outputs, [-1, self.num_units])
         W = tf.Variable(tf.truncated_normal([self.num_units, self.num_class], stddev=0.1), 
             dtype=tf.float32, name='lstm_w')
         b = tf.Variable(tf.constant(0., shape=[self.num_class], dtype=tf.float32), name='lstm_b')
 
-        logits = tf.matmul(outputs, W) + b
+        logits = tf.matmul(h_state, W) + b
         logits = tf.reshape(logits, [self.batch_size, -1, self.num_class])
         self.logits = tf.transpose(logits, (1, 0, 2))
-        self.loss = tf.reduce_mean(
-            tf.nn.ctc_loss(labels=self.labels, inputs=self.logits, sequence_length=self.seq_len))
+        self.loss = tf.nn.ctc_loss(labels=self.labels, inputs=self.logits, sequence_length=self.seq_len)
+        self.cost = tf.reduce_mean(self.loss)
         self.train_op = tf.train.AdamOptimizer(self.learn_rate).minimize(self.loss, self.global_step)
-
-        # self.decoded, log_prob = tf.nn.ctc_greedy_decoder(self.logits, self.seq_len, merge_repeated=False)
-        # self.decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, self.seq_len, merge_repeated=False)
-        # self.err = tf.reduce_mean(tf.edit_distance(tf.cast(self.decoded[0], tf.int32), self.labels))
-
 
     def unit(self):
         lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(num_units=self.num_units)
