@@ -3,26 +3,27 @@ import time
 import sys
 import os
 import cv2
+import random
 import numpy as np
 import tensorflow as tf
 from data import Data
 from lstm import LSTM_CTC
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 model_path = 'model'
 if not os.path.exists(model_path):
     os.mkdir(model_path)
 
-img_shape = (32, 80)
-data = Data(img_shape)
+data = Data()
+input_size = 28
 
+word_size = 8 # words in every image
 num_layer = 2
 num_units = 256
-num_class = data.word_dict.word_num + 1 + 1 # 1: ctc_blank
+num_class = data.word_num + 1 # 1: ctc_blank
 keep_prob = 0.5
-input_size = img_shape[0]
-learn_rate = 0.005
+learn_rate = 0.001
 batch_size = 64
 step = 10000 * 100
 
@@ -36,13 +37,19 @@ decoded, log_pro = tf.nn.ctc_beam_search_decoder(model.logits, model.seq_len, me
 err = tf.reduce_mean(tf.edit_distance(tf.cast(decoded[0], tf.int32), model.labels))
 init = tf.global_variables_initializer()
 
+print(num_class)
+
 with tf.Session() as sess:
     sess.run(init)
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=5)
     start = time.time()
     for i in range(step):
-        inputs, labels, seq_len = data.get_batch(batch_size)
-        seq_len = np.ones(batch_size) * 128
+        word_size = random.randint(4, 10)
+        inputs, labels = data.get_batch(batch_size=batch_size, 
+                                        word_size=word_size, 
+                                        input_size=input_size)
+
+        seq_len = np.ones(batch_size) * (input_size*word_size)
         feed = {
             model.X : inputs,
             model.labels : labels,
@@ -52,6 +59,7 @@ with tf.Session() as sess:
         }
 
         if (i+1) % 100 == 0:
+            feed[model.keep_prob] = 1.0
             decode, word_error, cost = sess.run([decoded, err, model.cost], feed_dict=feed)
             pre = data.decode_sparse_tensor(decode[0])
             ori = data.decode_sparse_tensor(labels)
@@ -62,10 +70,10 @@ with tf.Session() as sess:
             print('origin : ' + ori[0])
             print('predict: ' + pre[0])
 
-        sess.run([model.loss, model.train_op], feed_dict=feed)
+        sess.run(model.train_op, feed_dict=feed)
 
         if (i+1) % 3000 == 0:
-            learn_rate = max(0.99 ** (i / 6000) * learn_rate, 0.0001)
+            learn_rate = max(0.99 ** (i / 1000) * learn_rate, 0.000001)
             checkpoint_path = os.path.join(model_path, 'model.ckpt')
             saver.save(sess, checkpoint_path, global_step=i+1)
             print('save model in step: {}'.format(i+1))

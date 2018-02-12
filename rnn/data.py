@@ -2,21 +2,58 @@
 import os
 import sys
 import cv2
+import random
 import numpy as np
 import tensorflow as tf
+import words
 
-sys.path.append('../genarate_data/recognition_data/')
-from set_dict import word_dict
-import recognition_sample_gen as img_gen
+from PIL import Image, ImageDraw, ImageFont
 
+class Generator(object):
+    """Generate image with word"""
+    def __init__(self):
+        super(Generator, self).__init__()
+        self.id_char = dict([(idx, char) for idx, char in enumerate(words.chars)])
+        self.char_id = dict([(char, idx) for idx, char in enumerate(words.chars)])
+
+    def word_img(self, char, font):
+        img = Image.open('background.jpg')
+        img = img.resize((40, 40))
+        drawer = ImageDraw.Draw(img)
+        drawer.text((5, 5), text=char, fill='black', font=font)
+        img = np.array(img)
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        return img
+
+    def gen(self, batch_size, word_size):
+        '''Generate batch_size images and word_size words in every image'''
+        images = []
+        labels = []
+        font = ImageFont.truetype('font/fangzheng.ttf', 28)
+        for _ in range(batch_size):
+            label = []
+            img = np.zeros((40, 40*word_size), dtype=np.uint8)
+            for i in range(word_size):
+                idx = random.randint(0, len(self.char_id)-1)
+                label.append(idx)                
+                img[:, i*40:(i+1)*40] = self.word_img(self.id2char(idx), font)
+            images.append(img)
+            labels.append(np.asarray(label))
+        return images, labels
+
+    def char2id(self, char):
+        return self.char_id[char]
+
+    def id2char(self, idx):
+        return self.id_char[idx]
 
 class Data(object):
     """Data class for create training data and decode/encode data."""
-    def __init__(self, img_shape):
-        self.word_dict = word_dict()
-        self.img_shape = img_shape
+    def __init__(self):
+        self.generator = Generator()
+        self.word_num = len(words.chars)
 
-    def get_batch(self, batch_size=50):
+    def get_batch(self, batch_size=50, word_size=4, input_size=28):
         """Create a training batch of batch_size.
 
         Args:
@@ -24,21 +61,19 @@ class Data(object):
         Return:
             images, lables, seq length
         """
-        imgs, labels = img_gen.captcha_generator(batch_size, self.word_dict)
+        # imgs, labels = img_gen.captcha_generator(batch_size, self.word_dict)
+        imgs, labels = self.generator.gen(batch_size, word_size)
         ims = []
         seq_len = []
         for im in imgs:
             im = np.asarray(im)
             raws, cols = im.shape
-            # col = int(self.img_shape[0]*cols / raws)
-            # seq_len.append(col)
-            # im = cv2.resize(im, (col, self.img_shape[0]))
-            im = cv2.resize(im, (self.img_shape[1], self.img_shape[0]))
+            im = cv2.resize(im, (input_size*word_size, input_size))
             im = np.transpose(im)
             ims.append(im)
         labels = self.sparse_tuple_from(labels)
-        return np.asarray(ims), labels, np.asarray(seq_len)
- 
+        return np.asarray(ims), labels
+
     def sparse_tuple_from(self, sequences, dtype=np.int32):
         """Create a sparse representention of x.
 
@@ -55,7 +90,7 @@ class Data(object):
      
         indices = np.asarray(indices, dtype=np.int64)
         values = np.asarray(values, dtype=dtype)
-        shape = np.asarray([len(sequences), np.asarray(indices).max(0)[1] + 1], dtype=np.int64)     
+        shape = np.asarray([len(sequences), np.asarray(indices).max(0)[1] + 1], dtype=np.int64)
         return indices, values, shape
 
     def decode_sparse_tensor(self, sparse_tensor):
@@ -75,7 +110,7 @@ class Data(object):
         result = []
         for index in decoded_indexes:
             ids = [sparse_tensor[1][m] for m in index]
-            text = ''.join(list(map(self.word_dict.id2word, ids)))
+            text = ''.join(list(map(self.generator.id2char, ids)))
             result.append(text)
         return result
 
