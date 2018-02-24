@@ -16,7 +16,7 @@ if not os.path.exists(model_path):
     os.mkdir(model_path)
 
 data = Data()
-input_size = 28
+input_size = 32
 
 word_size = 8 # words in every image
 num_layer = 2
@@ -33,11 +33,13 @@ model = LSTM_CTC(num_layer=num_layer,
                  input_size=input_size,
                  batch_size=batch_size)
 model.build()
-decoded, log_pro = tf.nn.ctc_beam_search_decoder(model.logits, model.seq_len, merge_repeated=False)
+decoded, log_pro = tf.nn.ctc_beam_search_decoder(model.logits, model.seq_len//8, merge_repeated=False)
 err = tf.reduce_mean(tf.edit_distance(tf.cast(decoded[0], tf.int32), model.labels))
 init = tf.global_variables_initializer()
 
-print(num_class)
+print('\n========')
+print('classes number:', num_class)
+print('========\n')
 
 with tf.Session() as sess:
     sess.run(init)
@@ -72,7 +74,7 @@ with tf.Session() as sess:
 
         sess.run(model.train_op, feed_dict=feed)
 
-        if (i+1) % 3000 == 0:
+        if (i+1) % 2000 == 0:
             learn_rate = max(0.99 ** (i / 1000) * learn_rate, 0.000001)
             checkpoint_path = os.path.join(model_path, 'model.ckpt')
             saver.save(sess, checkpoint_path, global_step=i+1)

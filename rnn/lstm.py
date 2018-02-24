@@ -19,46 +19,53 @@ class LSTM_CTC(object):
         self.learn_rate = tf.placeholder(tf.float32, name='learn_rate')
         self.X = tf.placeholder(dtype=tf.float32, shape=[None, None, self.input_size], name='input')
         self.labels = tf.sparse_placeholder(tf.int32, name='label')
-        self.seq_len = tf.placeholder(tf.int32, [None], name='sequence_len')    
+        self.seq_len = tf.placeholder(tf.int32, [None], name='sequence_len')
         self.keep_prob = tf.placeholder(tf.float32, name='keep_prob')
 
-        # x = tf.reshape(self.X, [-1, 80, 32, 1], name='inputs')
-        # w1 = self.weight_variable([3, 3, 1, 32])
-        # b1 = self.bias_variable([32])
-        # conv1 = tf.nn.relu(self.conv2d(x, w1) + b1)
+        x = tf.reshape(self.X, [-1, self.seq_len[0], self.input_size, 1], name='inputs')
+        w1 = self.weight_variable([3, 3, 1, 32])
+        b1 = self.bias_variable([32])
+        conv1 = tf.nn.relu(self.conv2d(x, w1) + b1)
 
-        # w2 = self.weight_variable([3, 3, 32, 48])
-        # b2 = self.bias_variable([48])
-        # conv2 = tf.nn.relu(self.conv2d(conv1, w2) + b2)
-        # pool1 = self.max_pool(conv2)
+        w2 = self.weight_variable([3, 3, 32, 64])
+        b2 = self.bias_variable([64])
+        conv2 = tf.nn.relu(self.conv2d(conv1, w2) + b2)
+        pool1 = self.max_pool(conv2)
 
-        # w3 = self.weight_variable([3, 3, 48, 64])
-        # b3 = self.bias_variable([64])
-        # conv3 = tf.nn.relu(self.conv2d(pool1, w3) + b3)
+        w3 = self.weight_variable([3, 3, 64, 96])
+        b3 = self.bias_variable([96])
+        conv3 = tf.nn.relu(self.conv2d(pool1, w3) + b3)
 
-        # w4 = self.weight_variable([3, 3, 64, 64])
-        # b4 = self.bias_variable([64])
-        # conv4 = tf.nn.relu(self.conv2d(conv3, w4) + b4)
-        # pool2 = self.max_pool(conv4)
+        w4 = self.weight_variable([3, 3, 96, 128])
+        b4 = self.bias_variable([128])
+        conv4 = tf.nn.relu(self.conv2d(conv3, w4) + b4)
+        pool2 = self.max_pool(conv4)
 
-        # w5 = self.weight_variable([3, 3, 64, 96])
-        # b5 = self.bias_variable([96])
-        # conv5 = tf.nn.relu(self.conv2d(pool2, w5) + b5)
-        # pool3 = self.max_pool(conv5)
-        # cnn_out = tf.reshape(pool3, [self.batch_size, 96 * 4 * 10])
+        w5 = self.weight_variable([3, 3, 128, 256])
+        b5 = self.bias_variable([256])
+        conv5 = tf.nn.relu(self.conv2d(pool2, w5) + b5)
+        pool3 = self.max_pool(conv5)
 
-        # w_fc1 = self.weight_variable([96 * 4 * 10, 1024])
-        # b_fc1 = self.bias_variable([1024])
+        w6 =self.weight_variable([3, 3, 256, 1])
+        b6 = self.bias_variable([1])
+        conv6 = tf.nn.relu(self.conv2d(pool3, w6) + b6)
+
+        cnn_out = tf.reshape(conv6, [self.batch_size, -1])
+
+        # w_fc1 = self.weight_variable([1 * self.input_size//8 * (self.seq_len[0]*self.input_size)//8, self.seq_len[0]])
+        # b_fc1 = self.bias_variable([self.seq_len[0]])
 
         # feature = tf.nn.relu(tf.matmul(cnn_out, w_fc1) + b_fc1)
-        # feature = tf.nn.dropout(feature, self.keep_prob)
-        # feature = tf.reshape(feature, [self.batch_size, 128, 8])
 
+        feature = tf.nn.dropout(cnn_out, self.keep_prob)
+        feature = tf.reshape(feature, [self.batch_size, self.seq_len[0]//8, 4])
+        self.feature = feature
+        # print(feature.shape)
         mlstm_cell = tf.nn.rnn_cell.MultiRNNCell([self.unit() for i in range(self.num_layer)])
         init_state = mlstm_cell.zero_state(self.batch_size, dtype=tf.float32)
         outputs, state = tf.nn.dynamic_rnn(cell=mlstm_cell,
-                                           inputs=self.X,
-                                           sequence_length=self.seq_len,
+                                           inputs=feature,
+                                           sequence_length=self.seq_len//8,
                                            initial_state=init_state,
                                            time_major=False)
 
@@ -71,7 +78,7 @@ class LSTM_CTC(object):
         logits = tf.reshape(logits, [self.batch_size, -1, self.num_class])
         self.logits = tf.transpose(logits, (1, 0, 2))
         
-        self.loss = tf.nn.ctc_loss(labels=self.labels, inputs=self.logits, sequence_length=self.seq_len)
+        self.loss = tf.nn.ctc_loss(labels=self.labels, inputs=self.logits, sequence_length=self.seq_len//8)
         self.cost = tf.reduce_mean(self.loss)
         self.train_op = tf.train.AdamOptimizer(self.learn_rate).minimize(self.loss, self.global_step)
 
