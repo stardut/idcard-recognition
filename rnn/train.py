@@ -20,11 +20,11 @@ input_size = 32
 
 word_size = 8 # words in every image
 num_layer = 2
-num_units = 256
+num_units = 512
 num_class = data.word_num + 1 # 1: ctc_blank
 keep_prob = 0.5
 learn_rate = 0.001
-batch_size = 64
+batch_size = 128
 step = 10000 * 100
 
 model = LSTM_CTC(num_layer=num_layer,
@@ -57,11 +57,13 @@ with tf.Session() as sess:
             model.labels : labels,
             model.seq_len : seq_len,
             model.keep_prob: keep_prob,
-            model.learn_rate: learn_rate
+            model.learn_rate: learn_rate,
+            model.is_train: True
         }
 
         if (i+1) % 100 == 0:
             feed[model.keep_prob] = 1.0
+            feed[model.is_train] = False
             decode, word_error, cost = sess.run([decoded, err, model.cost], feed_dict=feed)
             pre = data.decode_sparse_tensor(decode[0])
             ori = data.decode_sparse_tensor(labels)
@@ -74,8 +76,9 @@ with tf.Session() as sess:
 
         sess.run(model.train_op, feed_dict=feed)
 
-        if (i+1) % 2000 == 0:
-            learn_rate = max(0.99 ** (i / 1000) * learn_rate, 0.000001)
-            checkpoint_path = os.path.join(model_path, 'model.ckpt')
+        if (i+1) % 5000 == 0:
+            learn_rate = max(0.98 * learn_rate, 0.00001)
+            name = 'model_acc_%.1f_loss_%.4f.ckpt'
+            checkpoint_path = os.path.join(model_path, name)
             saver.save(sess, checkpoint_path, global_step=i+1)
             print('save model in step: {}'.format(i+1))

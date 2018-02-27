@@ -16,11 +16,16 @@ class Generator(object):
         self.id_char = dict([(idx, char) for idx, char in enumerate(words.chars)])
         self.char_id = dict([(char, idx) for idx, char in enumerate(words.chars)])
 
-    def word_img(self, char, font):
+    def word_img(self, char):
         img = Image.open('background.jpg')
         img = img.resize((40, 40))
         drawer = ImageDraw.Draw(img)
-        drawer.text((5, 5), text=char, fill='black', font=font)
+        x = random.randint(0, 6)
+        y = random.randint(1, 4)
+        font_size = random.randint(25, 34)
+        font_path = ['font/fangzheng.ttf', 'font/huawen.ttf']
+        font = ImageFont.truetype(random.choice(font_path), font_size)
+        drawer.text((x, y), text=char, fill='black', font=font)
         img = np.array(img)
         img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         return img
@@ -29,14 +34,13 @@ class Generator(object):
         '''Generate batch_size images and word_size words in every image'''
         images = []
         labels = []
-        font = ImageFont.truetype('font/fangzheng.ttf', 28)
         for _ in range(batch_size):
             label = []
             img = np.zeros((40, 40*word_size), dtype=np.uint8)
             for i in range(word_size):
                 idx = random.randint(0, len(self.char_id)-1)
                 label.append(idx)                
-                img[:, i*40:(i+1)*40] = self.word_img(self.id2char(idx), font)
+                img[:, i*40:(i+1)*40] = self.word_img(self.id2char(idx))
             images.append(img)
             labels.append(np.asarray(label))
         return images, labels

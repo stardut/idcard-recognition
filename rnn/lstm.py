@@ -21,34 +21,35 @@ class LSTM_CTC(object):
         self.labels = tf.sparse_placeholder(tf.int32, name='label')
         self.seq_len = tf.placeholder(tf.int32, [None], name='sequence_len')
         self.keep_prob = tf.placeholder(tf.float32, name='keep_prob')
+        self.is_train = tf.placeholder(tf.bool)
 
         x = tf.reshape(self.X, [-1, self.seq_len[0], self.input_size, 1], name='inputs')
         w1 = self.weight_variable([3, 3, 1, 32])
         b1 = self.bias_variable([32])
-        conv1 = tf.nn.relu(self.conv2d(x, w1) + b1)
+        conv1 = tf.nn.relu(self.batch_norm(self.conv2d(x, w1) + b1, 32, self.is_train))
 
         w2 = self.weight_variable([3, 3, 32, 64])
         b2 = self.bias_variable([64])
-        conv2 = tf.nn.relu(self.conv2d(conv1, w2) + b2)
+        conv2 = tf.nn.relu(self.batch_norm(self.conv2d(conv1, w2) + b2, 64, self.is_train))
         pool1 = self.max_pool(conv2)
 
         w3 = self.weight_variable([3, 3, 64, 96])
         b3 = self.bias_variable([96])
-        conv3 = tf.nn.relu(self.conv2d(pool1, w3) + b3)
+        conv3 = tf.nn.relu(self.batch_norm(self.conv2d(pool1, w3) + b3, 96, self.is_train))
 
         w4 = self.weight_variable([3, 3, 96, 128])
         b4 = self.bias_variable([128])
-        conv4 = tf.nn.relu(self.conv2d(conv3, w4) + b4)
+        conv4 = tf.nn.relu(self.batch_norm(self.conv2d(conv3, w4) + b4, 128, self.is_train))
         pool2 = self.max_pool(conv4)
 
         w5 = self.weight_variable([3, 3, 128, 256])
         b5 = self.bias_variable([256])
-        conv5 = tf.nn.relu(self.conv2d(pool2, w5) + b5)
+        conv5 = tf.nn.relu(self.batch_norm(self.conv2d(pool2, w5) + b5, 256, self.is_train))
         pool3 = self.max_pool(conv5)
 
         w6 =self.weight_variable([3, 3, 256, 1])
         b6 = self.bias_variable([1])
-        conv6 = tf.nn.relu(self.conv2d(pool3, w6) + b6)
+        conv6 = tf.nn.relu(self.batch_norm(self.conv2d(pool3, w6) + b6, 1, self.is_train))
 
         cnn_out = tf.reshape(conv6, [self.batch_size, -1])
 
@@ -101,4 +102,63 @@ class LSTM_CTC(object):
 
     def max_pool(self, x):
         return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
-        
+
+    # def batch_norm(self, x, b_shape, train, eps=1e-05, decay=0.9, affine=True, name=None):
+    #     with tf.variable_scope(name, default_name='BatchNorm2d'):
+    #         # params_shape = tf.shape(x)[-1:]
+    #         params_shape = [b_shape]
+    #         print(params_shape)
+    #         moving_mean = tf.get_variable('mean', params_shape,
+    #                                       initializer=tf.zeros_initializer,
+    #                                       trainable=False)
+    #         moving_variance = tf.get_variable('variance', params_shape,
+    #                                           initializer=tf.ones_initializer,
+    #                                           trainable=False)
+
+    #         def mean_var_with_update():
+    #             mean, variance = tf.nn.moments(x, tf.shape(x)[:-1], name='moments')
+    #             with tf.control_dependencies([assign_moving_average(moving_mean, mean, decay),
+    #                                           assign_moving_average(moving_variance, variance, decay)]):
+    #                 return tf.identity(mean), tf.identity(variance)
+    #         mean, variance = tf.cond(train, mean_var_with_update, lambda: (moving_mean, moving_variance))
+    #         if affine:
+    #             beta = tf.get_variable('beta', params_shape,
+    #                                    initializer=tf.zeros_initializer)
+    #             gamma = tf.get_variable('gamma', params_shape,
+    #                                     initializer=tf.ones_initializer)
+    #             x = tf.nn.batch_normalization(x, mean, variance, beta, gamma, eps)
+    #         else:
+    #             x = tf.nn.batch_normalization(x, mean, variance, None, None, eps)
+
+    #         return x
+
+    def batch_norm(self, x, n_out, phase_train):
+        '''Batch normalization on convolutional maps.
+
+        Ref.: http://stackoverflow.com/questions/33949786/how-could-i-use-batch-normalization-in-tensorflow
+        Args:
+            x:           Tensor, 4D BHWD input maps
+            n_out:       integer, depth of input maps
+            phase_train: boolean tf.Varialbe, true indicates training phase
+            scope:       string, variable scope
+        Return:
+            normed:      batch-normalized maps
+        '''
+        with tf.variable_scope('bn'):
+            beta = tf.Variable(tf.constant(0.0, shape=[n_out]),
+                                         name='beta', trainable=True)
+            gamma = tf.Variable(tf.constant(1.0, shape=[n_out]),
+                                          name='gamma', trainable=True)
+            batch_mean, batch_var = tf.nn.moments(x, [0,1,2], name='moments')
+            ema = tf.train.ExponentialMovingAverage(decay=0.5)
+
+            def mean_var_with_update():
+                ema_apply_op = ema.apply([batch_mean, batch_var])
+                with tf.control_dependencies([ema_apply_op]):
+                    return tf.identity(batch_mean), tf.identity(batch_var)
+
+            mean, var = tf.cond(phase_train,
+                                mean_var_with_update,
+                                lambda: (ema.average(batch_mean), ema.average(batch_var)))
+            normed = tf.nn.batch_normalization(x, mean, var, beta, gamma, 1e-3)
+        return normed
