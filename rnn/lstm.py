@@ -12,6 +12,7 @@ class LSTM_CTC(object):
         self.num_class = num_class
         self.input_size = input_size
         self.batch_size = batch_size
+        self.build()
 
     def build(self):
         """Build network."""
@@ -47,21 +48,16 @@ class LSTM_CTC(object):
         conv5 = tf.nn.relu(self.batch_norm(self.conv2d(pool2, w5) + b5, 256, self.is_train))
         pool3 = self.max_pool(conv5)
 
-        w6 =self.weight_variable([3, 3, 256, 1])
-        b6 = self.bias_variable([1])
-        conv6 = tf.nn.relu(self.batch_norm(self.conv2d(pool3, w6) + b6, 1, self.is_train))
+        w6 =self.weight_variable([3, 3, 256, 256])
+        b6 = self.bias_variable([256])
+        conv6 = tf.nn.relu(self.batch_norm(self.conv2d(pool3, w6) + b6, 256, self.is_train))
 
         cnn_out = tf.reshape(conv6, [self.batch_size, -1])
 
-        # w_fc1 = self.weight_variable([1 * self.input_size//8 * (self.seq_len[0]*self.input_size)//8, self.seq_len[0]])
-        # b_fc1 = self.bias_variable([self.seq_len[0]])
-
-        # feature = tf.nn.relu(tf.matmul(cnn_out, w_fc1) + b_fc1)
-
         feature = tf.nn.dropout(cnn_out, self.keep_prob)
-        feature = tf.reshape(feature, [self.batch_size, self.seq_len[0]//8, 4])
+        feature = tf.reshape(feature, [self.batch_size, self.seq_len[0]//8, 4*256])
         self.feature = feature
-        # print(feature.shape)
+        
         mlstm_cell = tf.nn.rnn_cell.MultiRNNCell([self.unit() for i in range(self.num_layer)])
         init_state = mlstm_cell.zero_state(self.batch_size, dtype=tf.float32)
         outputs, state = tf.nn.dynamic_rnn(cell=mlstm_cell,
@@ -102,35 +98,6 @@ class LSTM_CTC(object):
 
     def max_pool(self, x):
         return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
-
-    # def batch_norm(self, x, b_shape, train, eps=1e-05, decay=0.9, affine=True, name=None):
-    #     with tf.variable_scope(name, default_name='BatchNorm2d'):
-    #         # params_shape = tf.shape(x)[-1:]
-    #         params_shape = [b_shape]
-    #         print(params_shape)
-    #         moving_mean = tf.get_variable('mean', params_shape,
-    #                                       initializer=tf.zeros_initializer,
-    #                                       trainable=False)
-    #         moving_variance = tf.get_variable('variance', params_shape,
-    #                                           initializer=tf.ones_initializer,
-    #                                           trainable=False)
-
-    #         def mean_var_with_update():
-    #             mean, variance = tf.nn.moments(x, tf.shape(x)[:-1], name='moments')
-    #             with tf.control_dependencies([assign_moving_average(moving_mean, mean, decay),
-    #                                           assign_moving_average(moving_variance, variance, decay)]):
-    #                 return tf.identity(mean), tf.identity(variance)
-    #         mean, variance = tf.cond(train, mean_var_with_update, lambda: (moving_mean, moving_variance))
-    #         if affine:
-    #             beta = tf.get_variable('beta', params_shape,
-    #                                    initializer=tf.zeros_initializer)
-    #             gamma = tf.get_variable('gamma', params_shape,
-    #                                     initializer=tf.ones_initializer)
-    #             x = tf.nn.batch_normalization(x, mean, variance, beta, gamma, eps)
-    #         else:
-    #             x = tf.nn.batch_normalization(x, mean, variance, None, None, eps)
-
-    #         return x
 
     def batch_norm(self, x, n_out, phase_train):
         '''Batch normalization on convolutional maps.

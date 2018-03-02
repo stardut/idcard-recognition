@@ -16,18 +16,34 @@ class Generator(object):
         self.id_char = dict([(idx, char) for idx, char in enumerate(words.chars)])
         self.char_id = dict([(char, idx) for idx, char in enumerate(words.chars)])
 
-    def word_img(self, char):
-        img = Image.open('background.jpg')
-        img = img.resize((40, 40))
+    def word_img(self, char, raw, img):
+        col = random.randint(raw-5, raw)
+        img = img.resize((col, raw)).convert("RGBA")
+        res = img.copy()
         drawer = ImageDraw.Draw(img)
-        x = random.randint(0, 6)
-        y = random.randint(1, 4)
-        font_size = random.randint(25, 34)
-        font_path = ['font/fangzheng.ttf', 'font/huawen.ttf']
-        font = ImageFont.truetype(random.choice(font_path), font_size)
-        drawer.text((x, y), text=char, fill='black', font=font)
-        img = np.array(img)
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        
+        font_size = random.randint(col-3, col)
+        x = random.randint(0, col - font_size)
+        y = random.randint(0, raw - font_size)
+        font_path = os.path.join('font', random.choice(os.listdir('font')))
+        font = ImageFont.truetype(font_path, font_size)
+        fill = (random.randint(0, 200), random.randint(0, 200), random.randint(0, 200))
+        drawer.text((x, y), text=char, fill=fill, font=font)
+
+        angle = random.randint(-20, 20)
+        img = img.rotate(angle, expand=0)
+        res = Image.composite(img, res, img).convert("RGB")
+        res = np.array(res)
+        return res
+
+    def get_background(self):
+        b_path = 'background'
+        imgs = os.listdir(b_path)
+        img = Image.open(os.path.join(b_path, random.choice(imgs)))
+        width, height = img.size[0], img.size[1]
+        x = random.randint(0, width-50)
+        y = random.randint(0, height-50)
+        img = img.crop((x, y, x+40, y+40))
         return img
 
     def gen(self, batch_size, word_size):
@@ -36,11 +52,25 @@ class Generator(object):
         labels = []
         for _ in range(batch_size):
             label = []
-            img = np.zeros((40, 40*word_size), dtype=np.uint8)
+            ims = []
+            cols = []
+            raw = random.randint(20, 36)
+            img = self.get_background()
             for i in range(word_size):
                 idx = random.randint(0, len(self.char_id)-1)
                 label.append(idx)                
-                img[:, i*40:(i+1)*40] = self.word_img(self.id2char(idx))
+                im = self.word_img(self.id2char(idx), raw, img)
+                ims.append(im)
+                cols.append(im.shape[1])
+            cols = np.asarray(cols)
+            img = np.zeros((raw, cols.sum(), 3), np.uint8)
+
+            x = 0
+            for idx, im in enumerate(ims):
+                img[:, x:x+cols[idx], :] = im
+                x += cols[idx]
+
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
             images.append(img)
             labels.append(np.asarray(label))
         return images, labels
@@ -57,7 +87,7 @@ class Data(object):
         self.generator = Generator()
         self.word_num = len(words.chars)
 
-    def get_batch(self, batch_size=50, word_size=4, input_size=28):
+    def get_batch(self, batch_size=50, word_size=4, input_size=32):
         """Create a training batch of batch_size.
 
         Args:
