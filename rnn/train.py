@@ -48,11 +48,9 @@ with tf.Session() as sess:
     start = time.time()
     for i in range(step):
         word_size = random.randint(1, 30)
-        inputs, labels = data.get_batch(batch_size=batch_size, 
+        inputs, labels, seq_len = data.get_batch(batch_size=batch_size, 
                                         word_size=word_size, 
                                         input_size=input_size)
-
-        seq_len = np.ones(batch_size) * (input_size*word_size)
         feed = {
             model.X : inputs,
             model.labels : labels,
@@ -75,13 +73,13 @@ with tf.Session() as sess:
             print('origin : ' + ori[0])
             print('predict: ' + pre[0])
 
-        sess.run(model.train_op, feed_dict=feed)
+        sess.run([model.train_op], feed_dict=feed)
 
-        if (i+1) % 1000 == 0:
+        if (i+1) % 2000 == 0:
             learn_rate = max(0.95 * learn_rate, 0.000001)
 
         if (i+1) % 3000 == 0:
-            name = 'model_acc_%.2f_loss_%.4f.ckpt' % (acc, cost)
+            name = '1-model_acc_%.2f_loss_%.4f.ckpt' % (acc, cost)
             checkpoint_path = os.path.join(model_path, name)
             saver.save(sess, checkpoint_path, global_step=i+1)
             print('save model in step: {}'.format(i+1))

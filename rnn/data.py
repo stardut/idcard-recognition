@@ -50,15 +50,15 @@ class Generator(object):
         '''Generate batch_size images and word_size words in every image'''
         images = []
         labels = []
+        raw = random.randint(20, 36)
         for _ in range(batch_size):
             label = []
             ims = []
-            cols = []
-            raw = random.randint(20, 36)
+            cols = []            
             img = self.get_background()
             for i in range(word_size):
                 idx = random.randint(0, len(self.char_id)-1)
-                label.append(idx)                
+                label.append(idx)
                 im = self.word_img(self.id2char(idx), raw, img)
                 ims.append(im)
                 cols.append(im.shape[1])
@@ -87,6 +87,28 @@ class Data(object):
         self.generator = Generator()
         self.word_num = len(words.chars)
 
+    def scale(self, images, input_size):
+        x = 0
+        rows = 0
+        for im in images:
+            rows, cols = im.shape
+            x = max(x, cols)
+        x = int(x*input_size/rows)
+        x = x + (8 - x%8)
+
+        imgs = []
+        seq_len = []
+        for im in images:
+            rows, cols = im.shape
+            col = int(cols*input_size/rows)
+            col = int(col - col%8)
+            img = np.zeros((input_size, x), np.uint8)
+            im = cv2.resize(im, (col, input_size))
+            img[:, :col] = im
+            seq_len.append(col)
+            imgs.append(img)
+        return imgs, np.asarray(seq_len)
+
     def get_batch(self, batch_size=50, word_size=4, input_size=32):
         """Create a training batch of batch_size.
 
@@ -96,17 +118,14 @@ class Data(object):
             images, lables, seq length
         """
         # imgs, labels = img_gen.captcha_generator(batch_size, self.word_dict)
-        imgs, labels = self.generator.gen(batch_size, word_size)
+        imgs, labels = self.generator.gen(batch_size, word_size)  
+        imgs, seq_len = self.scale(imgs, input_size)
         ims = []
-        seq_len = []
         for im in imgs:
-            im = np.asarray(im)
-            raws, cols = im.shape
-            im = cv2.resize(im, (input_size*word_size, input_size))
             im = np.transpose(im)
-            ims.append(im)
+            ims.append(im/255)
         labels = self.sparse_tuple_from(labels)
-        return np.asarray(ims), labels
+        return np.asarray(ims), labels, seq_len
 
     def sparse_tuple_from(self, sequences, dtype=np.int32):
         """Create a sparse representention of x.

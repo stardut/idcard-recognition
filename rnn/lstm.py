@@ -24,7 +24,7 @@ class LSTM_CTC(object):
         self.keep_prob = tf.placeholder(tf.float32, name='keep_prob')
         self.is_train = tf.placeholder(tf.bool)
 
-        x = tf.reshape(self.X, [-1, self.seq_len[0], self.input_size, 1], name='inputs')
+        x = tf.reshape(self.X, [self.batch_size, -1, self.input_size, 1], name='inputs')
         w1 = self.weight_variable([3, 3, 1, 32])
         b1 = self.bias_variable([32])
         conv1 = tf.nn.relu(self.batch_norm(self.conv2d(x, w1) + b1, 32, self.is_train))
@@ -55,7 +55,7 @@ class LSTM_CTC(object):
         cnn_out = tf.reshape(conv6, [self.batch_size, -1])
 
         feature = tf.nn.dropout(cnn_out, self.keep_prob)
-        feature = tf.reshape(feature, [self.batch_size, self.seq_len[0]//8, 4*256])
+        feature = tf.reshape(feature, [self.batch_size, -1, 4*256])
         self.feature = feature
         
         mlstm_cell = tf.nn.rnn_cell.MultiRNNCell([self.unit() for i in range(self.num_layer)])
