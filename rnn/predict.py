@@ -25,7 +25,7 @@ class Model(object):
                          input_size=input_size,
                          batch_size=batch_size)
 
-        self.decoded, _ = tf.nn.ctc_beam_search_decoder(model.logits, model.seq_len//4, merge_repeated=False)
+        self.decoded, _ = tf.nn.ctc_beam_search_decoder(model.logits, model.seq_len//8, merge_repeated=False)
         sess = tf.Session()
         saver = tf.train.Saver(tf.global_variables())        
         saver.restore(sess, 'model/model')
@@ -38,13 +38,10 @@ class Model(object):
         for im in imgs:
             raw, col = im.shape
             x = int(col/raw*32) - (int(col/raw*32) % 8)
-            im = cv2.resize(im, (x, 32))
-            cv2.imshow('test', im)
-            cv2.waitKey(0)
+            im = cv2.resize(im, (x, 32))            
             im = cv2.transpose(im)
             
             inputs.append(im/255)
-            print(im/255)
             seq_len.append(x)
 
         feed = {
@@ -57,15 +54,13 @@ class Model(object):
         for d in decode:
             pre = self.data.decode_sparse_tensor(d)
             print(pre)
+            cv2.imshow('test', np.transpose(inputs[0]))
+            cv2.waitKey(0)
 
 model = Model()
 
-img = cv2.imread('test.jpg')
+img = cv2.imread('test.png')
 img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-# for idx, i in enumerate(img):
-#     for kdx, k in enumerate(i):
-#         if k < 125:
-#             img[idx][kdx] = int(k*0.2)
 
 imgs = []
 imgs.append(img)

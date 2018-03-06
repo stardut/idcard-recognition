@@ -9,7 +9,7 @@ import tensorflow as tf
 from data import Data
 from lstm import LSTM_CTC
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 model_path = 'model'
@@ -75,11 +75,11 @@ with tf.Session() as sess:
 
         sess.run([model.train_op], feed_dict=feed)
 
-        if (i+1) % 2000 == 0:
-            learn_rate = max(0.95 * learn_rate, 0.000001)
+        if (i+1) % 5000 == 0:
+            learn_rate = max(0.95 * learn_rate, 0.00001)
 
         if (i+1) % 3000 == 0:
-            name = '1-model_acc_%.2f_loss_%.4f.ckpt' % (acc, cost)
+            name = '2-model_acc_%.2f_loss_%.4f.ckpt' % (acc, cost)
             checkpoint_path = os.path.join(model_path, name)
             saver.save(sess, checkpoint_path, global_step=i+1)
             print('save model in step: {}'.format(i+1))
