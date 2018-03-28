@@ -15,22 +15,31 @@ class Generator(object):
         super(Generator, self).__init__()
         self.id_char = dict([(idx, char) for idx, char in enumerate(words.chars)])
         self.char_id = dict([(char, idx) for idx, char in enumerate(words.chars)])
+        self.num = '0123456789X'
+        self.cha = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOASDFGHJKLZXCVBNM       '
 
-    def word_img(self, char, raw, img):
-        col = random.randint(raw-5, raw)
-        img = img.resize((col, raw)).convert("RGBA")
-        res = img.copy()
-        drawer = ImageDraw.Draw(img)
+    def word_img(self, char, row, img):
+        if char in self.num:
+            col = random.randint(row-12, row-8)
+            font_size = random.randint(row-2, row+1)
+        elif char in self.cha:            
+            col = random.randint(row-7, row-4)
+            font_size = random.randint(row-4, row)
+        else:            
+            col = random.randint(row-5, row)
+            font_size = random.randint(col-4, col)
         
-        font_size = random.randint(col-3, col)
-        x = random.randint(0, col - font_size)
-        y = random.randint(0, raw - font_size)
+        img = img.resize((col, row)).convert("RGBA")
+        res = img.copy()
+        drawer = ImageDraw.Draw(img)  
+        x = random.randint(0, 1)      
+        y = random.randint(0, 1)
         font_path = os.path.join('font', random.choice(os.listdir('font')))
         font = ImageFont.truetype(font_path, font_size)
-        fill = (random.randint(0, 200), random.randint(0, 200), random.randint(0, 200))
+        fill = (random.randint(0, 190), random.randint(0, 190), random.randint(0, 190))
         drawer.text((x, y), text=char, fill=fill, font=font)
 
-        angle = random.randint(-20, 20)
+        angle = random.randint(-5, 5)
         img = img.rotate(angle, expand=0)
         res = Image.composite(img, res, img).convert("RGB")
         res = np.array(res)
@@ -50,30 +59,55 @@ class Generator(object):
         '''Generate batch_size images and word_size words in every image'''
         images = []
         labels = []
-        raw = random.randint(20, 36)
+        row = random.randint(20, 36)
+        flage = [True, False]
         for _ in range(batch_size):
             label = []
             ims = []
             cols = []            
             img = self.get_background()
+            loop = random.randint(0, 8)
+            chk = random.random()
             for i in range(word_size):
-                idx = random.randint(0, len(self.char_id)-1)
+                if loop > 0:
+                    idx = self.choose_char(chk)
+                    loop -= 1
+                else:
+                    loop = random.randint(0, 18)
+                    chk = random.random()
+                    idx = self.choose_char(chk)
                 label.append(idx)
-                im = self.word_img(self.id2char(idx), raw, img)
+                im = self.word_img(self.id2char(idx), row, img)
                 ims.append(im)
                 cols.append(im.shape[1])
             cols = np.asarray(cols)
-            img = np.zeros((raw, cols.sum(), 3), np.uint8)
+            img = np.zeros((row, cols.sum(), 3), np.uint8)
 
             x = 0
             for idx, im in enumerate(ims):
                 img[:, x:x+cols[idx], :] = im
                 x += cols[idx]
-
+            # cv2.imshow('test', img)
+            # cv2.waitKey(0)
             img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
             images.append(img)
             labels.append(np.asarray(label))
         return images, labels
+
+    def choose_char(self, chk):
+        cn_ratio = 0.3
+        num_ratio = 0.8
+        if chk > cn_ratio:
+            if random.random() < num_ratio:
+                char_types = self.num
+            else:
+                char_types = self.cha
+
+            char = random.choice(char_types)
+            idx = self.char2id(char)
+        else:
+            idx = random.randint(0, len(self.char_id)-1)
+        return idx
 
     def char2id(self, char):
         return self.char_id[char]
