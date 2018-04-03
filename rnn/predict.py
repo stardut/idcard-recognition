@@ -10,26 +10,20 @@ from Levenshtein import *
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-BATCH_SIZE = 10
-
 class Model(object):
     """docstring for model"""
-    def __init__(self):
+    def __init__(self, num_layer, num_units, input_size, batch_size):
         super(Model, self).__init__()
         self.data = Data()
-        global BATCH_SIZE
-        num_layer = 2
-        num_units = 512
         num_class = self.data.word_num + 1
-        input_size = 32
-        batch_size = BATCH_SIZE
         model = LSTM_CTC(num_layer=num_layer,
                          num_units=num_units,
                          num_class=num_class,
                          input_size=input_size,
                          batch_size=batch_size)
 
-        self.decoded, _ = tf.nn.ctc_beam_search_decoder(model.logits, model.seq_len//8, merge_repeated=False)
+        self.decoded, _ = tf.nn.ctc_beam_search_decoder(model.logits, 
+            model.seq_len//8, merge_repeated=False)
         sess = tf.Session()
         saver = tf.train.Saver(tf.global_variables())        
         saver.restore(sess, 'model/model')
@@ -50,15 +44,12 @@ class Model(object):
             self.model.is_train: False
         }
         decode = self.sess.run(self.decoded, feed_dict=feed)
-        res = []
-        for d in decode:
-            pre = self.data.decode_sparse_tensor(d)
-            res.append(pre[0])
-            # print(pre)
-            # cv2.imshow('test', np.transpose(inputs[0]))
-            # cv2.waitKey(0)
+        pre = self.data.decode_sparse_tensor(decode[0])
+        # print(pre)
+        # cv2.imshow('test', np.transpose(inputs[0]))
+        # cv2.waitKey(0)
         
-        return res
+        return pre
 
 def equ(image):
     lut = np.zeros(256, dtype = image.dtype )#创建空的查找表  
@@ -143,8 +134,12 @@ def pre(model, img_paths):
     
     return model.predict(imgs)
 
+num_layer = 2
+num_units = 512
+input_size = 32
+batch_size = 10
 
-model = Model()
+model = Model(num_layer, num_units, input_size, batch_size)
 root = 'test/image/'
 lable = 'test/word.txt'
 
@@ -165,22 +160,20 @@ with open(lable, 'r', encoding='utf-16') as f:
         labels.append(label)
         img_paths.append(img_path)
 
-    epoch = len(labels) % BATCH_SIZE
+    epoch = len(labels) % batch_size
 
     for i in range(epoch):
-        res = pre(model, img_paths[i*BATCH_SIZE : (i+1)*BATCH_SIZE])
-        print(res)
-        print(img_paths[i*BATCH_SIZE : (i+1)*BATCH_SIZE])
+        res = pre(model, img_paths[i*batch_size : (i+1)*batch_size])
         res = list(map(lambda x: x.replace(' ', ''), res))
         print(res)
         num += 10
         
-        for m in range(BATCH_SIZE):
-            if labels[i*BATCH_SIZE+m] == res[m]:
+        for m in range(batch_size):
+            if labels[i*batch_size+m] == res[m]:
                 hit += 1
 
-            err += distance(labels[i*BATCH_SIZE+m], res[m])
-            word_num += len(labels[i*BATCH_SIZE+m])
+            err += distance(labels[i*batch_size+m], res[m])
+            word_num += len(labels[i*batch_size+m])
 
             print('ori: %s\npre: %s  %d\n' % (labels[i+m], res[m], num))
 

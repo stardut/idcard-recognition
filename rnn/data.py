@@ -123,11 +123,9 @@ class Data(object):
 
     def scale(self, images, input_size):
         x = 0
-        rows = 0
         for im in images:
             rows, cols = im.shape
-            x = max(x, cols)
-        x = int(x*input_size/rows)
+            x = max(x, int(cols*input_size/rows))
         x = x + (8 - x%8)
 
         imgs = []
