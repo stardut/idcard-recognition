@@ -9,7 +9,7 @@ import tensorflow as tf
 from data import Data
 from lstm import LSTM_CTC
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 model_path = 'model'
@@ -24,7 +24,7 @@ num_layer = 2
 num_units = 512
 num_class = data.word_num + 1 # 1: ctc_blank
 keep_prob = 0.5
-learn_rate = 0.001
+learn_rate = 0.0001
 batch_size = 64
 step = 10000 * 100
 
@@ -45,12 +45,23 @@ print('========\n')
 with tf.Session() as sess:
     sess.run(init)
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=5)
+
+    if sys.argv[1] == 'con-train':
+        model_file = tf.train.latest_checkpoint(model_path)
+        if model_file is not None:
+            saver.restore(sess, model_file)
+            print('restore model')
+
     start = time.time()
     for i in range(step):
         word_size = random.randint(1, 30)
         inputs, labels, seq_len = data.get_batch(batch_size=batch_size, 
                                         word_size=word_size, 
                                         input_size=input_size)
+
+        # cv2.imshow('test', np.transpose(inputs[0]))
+        # cv2.waitKey(0)
+
         feed = {
             model.X : inputs,
             model.labels : labels,
@@ -76,10 +87,10 @@ with tf.Session() as sess:
         sess.run([model.train_op], feed_dict=feed)
 
         if (i+1) % 5000 == 0:
-            learn_rate = max(0.95 * learn_rate, 0.00001)
+            learn_rate = max(0.95 * learn_rate, 0.0000001)
 
         if (i+1) % 3000 == 0:
-            name = '2-model_acc_%.2f_loss_%.4f.ckpt' % (acc, cost)
+            name = 'model_acc_%.2f_loss_%.4f.ckpt' % (acc, cost)
             checkpoint_path = os.path.join(model_path, name)
             saver.save(sess, checkpoint_path, global_step=i+1)
             print('save model in step: {}'.format(i+1))
