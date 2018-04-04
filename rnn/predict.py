@@ -8,6 +8,7 @@ from lstm import LSTM_CTC
 from data import Data
 from Levenshtein import *
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 class Model(object):
@@ -25,8 +26,10 @@ class Model(object):
         self.decoded, _ = tf.nn.ctc_beam_search_decoder(model.logits, 
             model.seq_len//8, merge_repeated=False)
         sess = tf.Session()
-        saver = tf.train.Saver(tf.global_variables())        
-        saver.restore(sess, 'model/model')
+        saver = tf.train.Saver(tf.global_variables())
+        model_file = tf.train.latest_checkpoint('model')
+        model_file = 'model/model'
+        saver.restore(sess, model_file)
         self.sess = sess
         self.model = model
 
@@ -115,18 +118,14 @@ def cut(img):
             break
     return img[top:buttom, left:right]
 
-def trans(img):
-    return 255-img
-
 def pre(model, img_paths):
     imgs = []
     for p in img_paths:
         img = cv2.imread(p)
         img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-        # print(np.mean(img))
         # if np.mean(img) < 80:
-        #     img = trans(img)
+        #     img = 255 - img
 
         img = equ(img)
         img = cut(img)
@@ -137,18 +136,18 @@ def pre(model, img_paths):
 num_layer = 2
 num_units = 512
 input_size = 32
-batch_size = 10
+batch_size = 20
 
 model = Model(num_layer, num_units, input_size, batch_size)
 root = 'test/image/'
-lable = 'test/word.txt'
+lable = 'test/label.txt'
 
 num = 0
 hit = 0
 err = 0
 word_num = 0
 
-with open(lable, 'r', encoding='utf-16') as f:
+with open(lable, 'r') as f:
     data = f.readlines()
     labels = []
     img_paths = []
@@ -158,24 +157,22 @@ with open(lable, 'r', encoding='utf-16') as f:
         label = s[1].replace('\n', '')
         label = label.replace(' ', '')
         labels.append(label)
-        img_paths.append(img_path)
-
-    epoch = len(labels) % batch_size
+        img_paths.append(img_path.replace('\ufeff', ''))
+    epoch = len(labels) // batch_size
 
     for i in range(epoch):
         res = pre(model, img_paths[i*batch_size : (i+1)*batch_size])
         res = list(map(lambda x: x.replace(' ', ''), res))
-        print(res)
-        num += 10
+        num += batch_size
         
         for m in range(batch_size):
-            if labels[i*batch_size+m] == res[m]:
+            if labels[i*batch_size + m] == res[m]:
                 hit += 1
 
             err += distance(labels[i*batch_size+m], res[m])
             word_num += len(labels[i*batch_size+m])
 
-            print('ori: %s\npre: %s  %d\n' % (labels[i+m], res[m], num))
+            print('ori: %s\npre: %s  %d\n' % (labels[i*batch_size+m], res[m], num))
 
     print('accuracy: %.3f, word error: %.3f' % (hit/num, err/word_num))
 
