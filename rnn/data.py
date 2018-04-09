@@ -15,8 +15,8 @@ class Generator(object):
         super(Generator, self).__init__()
         self.id_char = dict([(idx, char) for idx, char in enumerate(words.chars)])
         self.char_id = dict([(char, idx) for idx, char in enumerate(words.chars)])
-        self.num = '0123456789X'
-        self.cha = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOASDFGHJKLZXCVBNM       '
+        self.num = '0123456789X    '
+        self.cha = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOASDFGHJKLZXCVBNM        '
 
     def word_img(self, char, row, img):
         if char in self.num:
@@ -36,7 +36,7 @@ class Generator(object):
         y = random.randint(0, 1)
         font_path = os.path.join('font', random.choice(os.listdir('font')))
         font = ImageFont.truetype(font_path, font_size)
-        fill = (random.randint(0, 190), random.randint(0, 190), random.randint(0, 190))
+        fill = (random.randint(0, 160), random.randint(0, 160), random.randint(0, 160))
         drawer.text((x, y), text=char, fill=fill, font=font)
 
         angle = random.randint(-5, 5)
@@ -95,7 +95,7 @@ class Generator(object):
         return images, labels
 
     def choose_char(self, chk):
-        cn_ratio = 0.3
+        cn_ratio = 0.8
         num_ratio = 0.8
         if chk > cn_ratio:
             if random.random() < num_ratio:
