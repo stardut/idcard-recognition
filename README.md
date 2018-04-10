@@ -31,10 +31,18 @@
 ### 方案二 （模型训练周期较长）
 直接利用rnn对整个句子进行识别（lstm + ctc）
 
+<img src="img/rec2.png">
+<img src="img/rec3.png">
+<img src="img/rec4.png">
+<img src="img/rec5.png">
+<img src="img/rec6.png">
+<img src="img/rec7.png">
+
 #### 数据集制作
 随机自动生成：
 
-<img src="img/rec_data1.jpg" >
-<img src="img/rec_data2.jpg" >
-<img src="img/rec_data3.jpg" >
-<img src="img/rec_data4.jpg" >
+<img src="img/0.jpg" >
+<img src="img/17.jpg" >
+<img src="img/38.jpg" >
+<img src="img/45.jpg" >
+<img src="img/84.jpg" >
