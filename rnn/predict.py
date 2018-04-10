@@ -50,15 +50,15 @@ def run(img_path):
         print(res[idx])
 
     y, x, c = img_box.shape
-    y1 = 400
+    y1 = 300
     x1 = int(y1*x/y)
 
     img_box = cv2.resize(img_box, (x1, y1))
     cv2.imshow('test', img_box)
     cv2.waitKey(0)
 
-# path = 'test/img/'
-# for im in os.listdir(path):
-#     run(os.path.join(path, im))
+path = 'test/img/'
+for im in os.listdir(path):
+    run(os.path.join(path, im))
 
-run('test/img/test7.png')
+# run('test/img/test11.png')

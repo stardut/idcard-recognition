@@ -17,6 +17,7 @@ class Generator(object):
         self.char_id = dict([(char, idx) for idx, char in enumerate(words.chars)])
         self.num = '0123456789X    '
         self.cha = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOASDFGHJKLZXCVBNM        '
+        self.exchar = '姓名年月日出生民族性别公民身份号码住址          '
 
     def word_img(self, char, row, img):
         if char in self.num:
@@ -36,7 +37,10 @@ class Generator(object):
         y = random.randint(0, 1)
         font_path = os.path.join('font', random.choice(os.listdir('font')))
         font = ImageFont.truetype(font_path, font_size)
-        fill = (random.randint(0, 160), random.randint(0, 160), random.randint(0, 160))
+        fill = (random.randint(0, 110), random.randint(0, 110), random.randint(0, 110))
+        if char in self.exchar:
+            fill = (random.randint(0, 210), random.randint(0, 180), random.randint(0, 160))    
+        
         drawer.text((x, y), text=char, fill=fill, font=font)
 
         angle = random.randint(-5, 5)
@@ -97,6 +101,7 @@ class Generator(object):
     def choose_char(self, chk):
         cn_ratio = 0.8
         num_ratio = 0.8
+        ex_ratio = 0.4
         if chk > cn_ratio:
             if random.random() < num_ratio:
                 char_types = self.num
@@ -106,7 +111,11 @@ class Generator(object):
             char = random.choice(char_types)
             idx = self.char2id(char)
         else:
-            idx = random.randint(0, len(self.char_id)-1)
+            if random.random() < ex_ratio:
+                char = random.choice(self.exchar)
+                idx = self.char2id(char)
+            else:
+                idx = random.randint(0, len(self.char_id)-1)
         return idx
 
     def char2id(self, char):
